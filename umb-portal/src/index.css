@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+:root {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+@layer utilities {
+  .bg-umb-pattern {
+    background-color: #050505;
+    background-image:
+      radial-gradient(circle at 24px 24px, #b78621 0 10px, transparent 11px),
+      repeating-linear-gradient(45deg, #9b701f 0 8px, transparent 8px 22px),
+      repeating-linear-gradient(
+        -45deg,
+        rgba(178, 128, 34, 0.9) 0 6px,
+        transparent 6px 20px
+      ),
+      repeating-linear-gradient(0deg, #31220b 0 12px, transparent 12px 34px),
+      repeating-linear-gradient(90deg, #2b1f0a 0 10px, transparent 10px 32px),
+      repeating-linear-gradient(
+        0deg,
+        rgba(181, 181, 181, 0.75) 0 2px,
+        transparent 2px 44px
+      );
+    background-size: 180px 180px;
+    background-position:
+      0 0,
+      16px 12px,
+      24px 28px,
+      0 0,
+      0 0,
+      80px 52px;
+  }
+}
