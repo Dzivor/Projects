@@ -1,0 +1,56 @@
+using BankStatementAPI.Services;
+
+var builder  = WebApplication.CreateBuilder(args);
+
+//Registering services
+
+//controller support
+builder.Services.AddControllers();
+
+//Swagger 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+builder.Services.AddHttpClient();//calling existing APIs
+
+//custom services
+builder.Services.AddScoped<BankApiService>();
+builder.Services.AddScoped<ChargingService>();
+builder.Services.AddScoped<PdfService>();
+
+//frontend connection
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // Replace with your frontend URL
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+//build
+
+var app= builder.Build();
+
+//swagger in development environment only
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+app.UseHttpsRedirection();
+
+//CORS
+
+app.UseCors("AllowFrontend");
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+
+//map controllers
+app.MapControllers();
+
+
+app.Run();

@@ -1,0 +1,8 @@
+C:\Projects\Backend\BankStatementAPI\obj\Debug\net10.0\BankStatementAPI.csproj.AssemblyReference.cache
+C:\Projects\Backend\BankStatementAPI\obj\Debug\net10.0\rpswa.dswa.cache.json
+C:\Projects\Backend\BankStatementAPI\obj\Debug\net10.0\BankStatementAPI.GeneratedMSBuildEditorConfig.editorconfig
+C:\Projects\Backend\BankStatementAPI\obj\Debug\net10.0\BankStatementAPI.AssemblyInfoInputs.cache
+C:\Projects\Backend\BankStatementAPI\obj\Debug\net10.0\BankStatementAPI.AssemblyInfo.cs
+C:\Projects\Backend\BankStatementAPI\obj\Debug\net10.0\BankStatementAPI.csproj.CoreCompileInputs.cache
+C:\Projects\Backend\BankStatementAPI\obj\Debug\net10.0\BankStatementAPI.MvcApplicationPartsAssemblyInfo.cs
+C:\Projects\Backend\BankStatementAPI\obj\Debug\net10.0\BankStatementAPI.MvcApplicationPartsAssemblyInfo.cache
