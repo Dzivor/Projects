@@ -1,4 +1,5 @@
 using BankStatementAPI.Services;
+using BankStatementAPI.Middleware;
 
 var builder  = WebApplication.CreateBuilder(args);
 
@@ -6,6 +7,7 @@ var builder  = WebApplication.CreateBuilder(args);
 
 //controller support
 builder.Services.AddControllers();
+
 
 //Swagger 
 builder.Services.AddEndpointsApiExplorer();
@@ -44,6 +46,9 @@ app.UseHttpsRedirection();
 //CORS
 
 app.UseCors("AllowFrontend");
+
+//Register our custom auth middleware
+app.UseMiddleware<AuthMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
