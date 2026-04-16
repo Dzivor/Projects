@@ -8,15 +8,12 @@ namespace BankStatementAPI.Services
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _config;
 
-        // IConfiguration 
-        // HttpClient 
         public BankApiService(HttpClient httpClient, IConfiguration config)
         {
             _httpClient = httpClient;
             _config = config;
         }
 
-        // Looks up an account and returns its name
         public async Task<AccountLookupDTO?> GetAccountDetails(string accountNumber)
         {
             try
@@ -30,10 +27,8 @@ namespace BankStatementAPI.Services
                 if (!response.IsSuccessStatusCode)
                     return null;
 
-                var account = await response.Content
+                return await response.Content
                     .ReadFromJsonAsync<AccountLookupDTO>();
-
-                return account;
             }
             catch
             {
@@ -41,7 +36,6 @@ namespace BankStatementAPI.Services
             }
         }
 
-        // Fetches the full statement from the bank API
         public async Task<Statement?> GetStatement(
             string accountNumber,
             DateTime startDate,
@@ -52,7 +46,8 @@ namespace BankStatementAPI.Services
                 string baseUrl = _config["BankApi:BaseUrl"]!;
 
                 var response = await _httpClient.GetAsync(
-                    $"{baseUrl}/statements?accountNumber={accountNumber}" +
+                    $"{baseUrl}/statements" +
+                    $"?accountNumber={accountNumber}" +
                     $"&startDate={startDate:yyyy-MM-dd}" +
                     $"&endDate={endDate:yyyy-MM-dd}"
                 );
@@ -60,6 +55,10 @@ namespace BankStatementAPI.Services
                 if (!response.IsSuccessStatusCode)
                     return null;
 
+                // ReadFromJsonAsync maps the JSON response
+                // to our updated Statement model automatically
+                // Field names in the JSON must match property names
+                // in the Statement class
                 var statement = await response.Content
                     .ReadFromJsonAsync<Statement>();
 
@@ -71,7 +70,6 @@ namespace BankStatementAPI.Services
             }
         }
 
-        // Debits an account for the statement charge
         public async Task<bool> DebitAccount(
             string accountNumber,
             decimal amount)
