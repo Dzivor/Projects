@@ -98,7 +98,7 @@ namespace BankStatementAPI.Services
                                 table.Cell().Padding(5)
                                     .Text(transaction.Date.ToString("dd/MM/yyyy"));
                                 table.Cell().Padding(5)
-                                    .Text(transaction.Description);
+                                    .Text(transaction.Narrative);
                                 table.Cell().Padding(5)
                                     .Text(transaction.Debit > 0
                                         ? $"GHS {transaction.Debit:N2}" : "-");
