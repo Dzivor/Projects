@@ -5,8 +5,8 @@ using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
  namespace BankStatementAPI.Services{
-    public class pdfService{
-        public pdfService()
+    public class PdfService{
+        public PdfService()
         {
             //Required by QuestPDF for non-commercial use
             QuestPDF.Settings.License = LicenseType.Community;
