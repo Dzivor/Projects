@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "vPQxEAgw5KA=",
+  "dgSpecHash": "1r+TREsBYmI=",
   "success": true,
   "projectFilePath": "C:\\Projects\\Backend\\BankStatementAPI\\BankStatementAPI.csproj",
   "expectedPackageFiles": [
@@ -55,11 +55,14 @@
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.composition.hosting\\9.0.0\\system.composition.hosting.9.0.0.nupkg.sha512",
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.composition.runtime\\9.0.0\\system.composition.runtime.9.0.0.nupkg.sha512",
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.composition.typedparts\\9.0.0\\system.composition.typedparts.9.0.0.nupkg.sha512",
-    "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.configuration.configurationmanager\\9.0.4\\system.configuration.configurationmanager.9.0.4.nupkg.sha512",
+    "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.configuration.configurationmanager\\10.0.6\\system.configuration.configurationmanager.10.0.6.nupkg.sha512",
+    "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.directoryservices\\10.0.6\\system.directoryservices.10.0.6.nupkg.sha512",
+    "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.directoryservices.accountmanagement\\10.0.6\\system.directoryservices.accountmanagement.10.0.6.nupkg.sha512",
+    "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.directoryservices.protocols\\10.0.6\\system.directoryservices.protocols.10.0.6.nupkg.sha512",
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.identitymodel.tokens.jwt\\8.0.1\\system.identitymodel.tokens.jwt.8.0.1.nupkg.sha512",
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.memory.data\\8.0.1\\system.memory.data.8.0.1.nupkg.sha512",
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.security.cryptography.pkcs\\9.0.4\\system.security.cryptography.pkcs.9.0.4.nupkg.sha512",
-    "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.security.cryptography.protecteddata\\9.0.4\\system.security.cryptography.protecteddata.9.0.4.nupkg.sha512"
+    "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.security.cryptography.protecteddata\\10.0.6\\system.security.cryptography.protecteddata.10.0.6.nupkg.sha512"
   ],
   "logs": []
 }

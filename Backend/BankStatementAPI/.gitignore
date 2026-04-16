@@ -1,0 +1,16 @@
+# Configuration files
+*.config
+*.json
+*.env
+*.yml
+*.yaml
+
+# Bin folder
+bin/
+obj/
+appsettings.json
+
+# IDE
+.vs/
+.vscode/
+*.user
