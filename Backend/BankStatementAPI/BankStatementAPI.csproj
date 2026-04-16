@@ -21,6 +21,7 @@
     </PackageReference>
     <PackageReference Include="QuestPDF" Version="2026.2.4" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="10.0.6" />
   </ItemGroup>
 
 </Project>
