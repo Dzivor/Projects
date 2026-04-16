@@ -1,5 +1,7 @@
 using BankStatementAPI.Services;
 using BankStatementAPI.Middleware;
+using BankStatementAPI.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder  = WebApplication.CreateBuilder(args);
 
@@ -14,6 +16,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddHttpClient();//calling existing APIs
+
+//Database context
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 //custom services
 builder.Services.AddScoped<BankApiService>();
