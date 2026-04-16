@@ -3,12 +3,14 @@ namespace BankStatementAPI.Middleware
     public class AuthMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly IConfiguration _config;
 
         // RequestDelegate represents the next piece of middleware
         // or the actual endpoint in the pipeline
-        public AuthMiddleware(RequestDelegate next)
+        public AuthMiddleware(RequestDelegate next, IConfiguration config)
         {
             _next = next;
+            _config = config;
         }
 
         public async Task InvokeAsync(HttpContext context)
