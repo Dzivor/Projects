@@ -59,7 +59,16 @@ namespace BankStatementAPI.Controllers
                 TotalCharge = chargePreview.TotalCharge,
                 AccountToCharge = chargePreview.AccountCharged,
                 ChargeMessage = chargePreview.Message,
-                AccountName = statement.AccountName
+                AccountName = statement.AccountName,
+                AccountNumber = statement.AccountNumber,
+                Branch = statement.Branch,
+                AccountType = statement.AccountType,
+                BookBalance = statement.BookBalance,
+                ClearBalance = statement.ClearBalance,
+                TotalDebitValue = statement.TotalDebitValue,
+                TotalCreditValue = statement.TotalCreditValue,
+                TotalDebitCount = statement.TotalDebitCount,
+                TotalCreditCount = statement.TotalCreditCount
             });
         }
 
