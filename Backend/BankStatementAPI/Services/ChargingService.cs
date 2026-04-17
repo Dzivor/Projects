@@ -29,7 +29,7 @@ namespace BankStatementAPI.Services
                 return new ChargingResult
                 {
                     TotalCharge = 0,
-                    AccountCharged = null,
+                    AccountCharged = string.Empty,
                     Status = ChargeStatus.Free,
                     NumberOfPages = numberOfPages,
                     Message = "No charge applicable for ESB channel"
@@ -42,7 +42,7 @@ namespace BankStatementAPI.Services
                 return new ChargingResult
                 {
                     TotalCharge = 0,
-                    AccountCharged = null,
+                    AccountCharged = string.Empty,
                     Status = ChargeStatus.Waived,
                     NumberOfPages = numberOfPages,
                     Message = "Charge has been waived"
