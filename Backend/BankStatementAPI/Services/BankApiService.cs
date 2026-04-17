@@ -1,3 +1,4 @@
+using System.Text;
 using BankStatementAPI.DTOs;
 using BankStatementAPI.Models;
 
@@ -12,6 +13,23 @@ namespace BankStatementAPI.Services
         {
             _httpClient = httpClient;
             _config = config;
+
+            //Basic authentication setup for all requests to the bank API
+            string username = _config["BankApi:Username"]!;
+            string password = _config["BankApi:Password"]!;
+            string credentials = Convert.ToBase64String(
+                Encoding.UTF8.GetBytes($"{username}: {password}")
+            );
+
+            _httpClient.DefaultRequestHeaders.Add(
+                "credential", credentials
+            );
+
+            _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+
+            _httpClient.DefaultRequestHeaders.Add(
+                "disablePagination","true"
+            );
         }
 
         public async Task<AccountLookupDTO?> GetAccountDetails(string accountNumber)
@@ -19,16 +37,33 @@ namespace BankStatementAPI.Services
             try
             {
                 string baseUrl = _config["BankApi:BaseUrl"]!;
+                string companyId = _config["BankApi:CompanyId"]!;
+
+
+                _httpClient.DefaultRequestHeaders.Remove("companyId");
+                _httpClient.DefaultRequestHeaders.Add("companyId", companyId);
 
                 var response = await _httpClient.GetAsync(
-                    $"{baseUrl}/accounts/{accountNumber}"
+                    $"{baseUrl}/party/umbGetAccountInfo/?accountNo={accountNumber}"
                 );
 
                 if (!response.IsSuccessStatusCode)
                     return null;
 
-                return await response.Content
-                    .ReadFromJsonAsync<AccountLookupDTO>();
+                    //Parsing nested response structure
+
+                    var result = await response.Content.ReadFromJsonAsync<BankApiResponse<List<AccountInfo>>>();
+
+                    if (result?.Body == null || !result.Body.Any())
+                        return null;
+
+                var account = result.Body.First();
+
+                return new AccountLookupDTO
+                {
+                    AccountNumber= account.AccountNumber,
+                    AccountName = account.Name
+                };
             }
             catch
             {
@@ -36,59 +71,45 @@ namespace BankStatementAPI.Services
             }
         }
 
-        public async Task<Statement?> GetStatement(
-            string accountNumber,
-            DateTime startDate,
-            DateTime endDate)
+       // Get statement using the getAccountStatements endpoint
+    public async Task<Statement?> GetStatement(
+        string accountNumber,
+        DateTime startDate,
+        DateTime endDate)
+    {
+        try
         {
-            try
-            {
-                string baseUrl = _config["BankApi:BaseUrl"]!;
+            string baseUrl = _config["BankApi:BaseUrl"]!;
 
-                var response = await _httpClient.GetAsync(
-                    $"{baseUrl}/statements" +
-                    $"?accountNumber={accountNumber}" +
-                    $"&startDate={startDate:yyyy-MM-dd}" +
-                    $"&endDate={endDate:yyyy-MM-dd}"
-                );
+            // Note the date format is YYYYMMDD not YYYY-MM-DD
+            string url = $"{baseUrl}/party/account/getAccountStatements.2.1.0" +
+                         $"?accountNumber={accountNumber}" +
+                         $"&startDate={startDate:yyyyMMdd}" +
+                         $"&endDate={endDate:yyyyMMdd}";
 
-                if (!response.IsSuccessStatusCode)
-                    return null;
+            var response = await _httpClient.GetAsync(url);
 
-                // ReadFromJsonAsync maps the JSON response
-                // to our updated Statement model automatically
-                // Field names in the JSON must match property names
-                // in the Statement class
-                var statement = await response.Content
-                    .ReadFromJsonAsync<Statement>();
-
-                return statement;
-            }
-            catch
-            {
+            if (!response.IsSuccessStatusCode)
                 return null;
-            }
+
+            var result = await response.Content
+                .ReadFromJsonAsync<BankApiResponse<Statement>>();
+
+            if (result?.Body == null)
+                return null;
+
+            result.Body.AccountNumber = string.IsNullOrWhiteSpace(result.Body.AccountNumber)
+                ? accountNumber
+                : result.Body.AccountNumber;
+            result.Body.StartDate = startDate;
+            result.Body.EndDate = endDate;
+
+            return result.Body;
         }
-
-        public async Task<bool> DebitAccount(
-            string accountNumber,
-            decimal amount)
+        catch
         {
-            try
-            {
-                string baseUrl = _config["BankApi:BaseUrl"]!;
-
-                var response = await _httpClient.PostAsJsonAsync(
-                    $"{baseUrl}/accounts/debit",
-                    new { accountNumber, amount }
-                );
-
-                return response.IsSuccessStatusCode;
-            }
-            catch
-            {
-                return false;
-            }
+            return null;
         }
     }
+}
 }
