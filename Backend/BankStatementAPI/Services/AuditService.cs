@@ -24,7 +24,7 @@ namespace BankStatementAPI.Services
             DateTime endDate,
             string channelUsed,
             string staffId,
-            ChargingResult ChargingResult
+            ChargingResult chargingResult
             
         )
         {
@@ -38,10 +38,10 @@ namespace BankStatementAPI.Services
                 StartDate = startDate,
                 EndDate = endDate,
                 ChannelUsed = channelUsed,
-                NumberOfPages = ChargingResult.NumberOfPages,
-                AmountCharged = ChargingResult.TotalCharge,
-                AccountCharged = ChargingResult.AccountCharged,
-                WasWaived = ChargingResult.Status == ChargeStatus.Waived,
+                NumberOfPages = chargingResult.NumberOfPages,
+                AmountCharged = chargingResult.TotalCharge,
+                AccountCharged = chargingResult.AccountCharged,
+                WasWaived = chargingResult.Status == ChargeStatus.Waived,
                 GeneratedAt = DateTime.UtcNow
             };
 
