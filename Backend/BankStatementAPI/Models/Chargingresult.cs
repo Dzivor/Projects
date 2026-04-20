@@ -8,5 +8,7 @@ namespace BankStatementAPI.Models
         public ChargeStatus Status { get; set; }
         public string Message { get; set; } = "";
         public int NumberOfPages { get; set; }
+
+        public string? BankTransactionReference { get; set; }
     }
 }

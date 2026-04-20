@@ -13,57 +13,106 @@ namespace BankStatementAPI.Services
         {
             _httpClient = httpClient;
             _config = config;
-
-            //Basic authentication setup for all requests to the bank API
-            string username = _config["BankApi:Username"]!;
-            string password = _config["BankApi:Password"]!;
-            string credentials = Convert.ToBase64String(
-                Encoding.UTF8.GetBytes($"{username}: {password}")
-            );
-
-            _httpClient.DefaultRequestHeaders.Add(
-                "credential", credentials
-            );
-
-            _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
-
-            _httpClient.DefaultRequestHeaders.Add(
-                "disablePagination","true"
-            );
         }
 
-        public async Task<AccountLookupDTO?> GetAccountDetails(string accountNumber)
+        private void AddBankApiHeaders(HttpRequestMessage request)
+        {
+            string signOn = _config["BankApi:SignOn"]!;
+            string companyId = _config["BankApi:CompanyId"]!;
+
+            request.Headers.Add("credentials", signOn);
+            request.Headers.Add("companyId", companyId);
+            request.Headers.Add("Accept", "application/json");
+        }
+
+        public async Task<AccountLookupResultDTO> GetAccountDetails(string accountNumber)
         {
             try
             {
                 string baseUrl = _config["BankApi:BaseUrl"]!;
-                string companyId = _config["BankApi:CompanyId"]!;
+                string url = $"{baseUrl}/party/umbGetAcctInfo/?accountNo={accountNumber}";
 
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                AddBankApiHeaders(request);
 
-                _httpClient.DefaultRequestHeaders.Remove("companyId");
-                _httpClient.DefaultRequestHeaders.Add("companyId", companyId);
+                var response = await _httpClient.SendAsync(request);
 
-                var response = await _httpClient.GetAsync(
-                    $"{baseUrl}/party/umbGetAccountInfo/?accountNo={accountNumber}"
-                );
+                if (!response.IsSuccessStatusCode)
+                    return new AccountLookupResultDTO
+                    {
+                        Success = false,
+                        AccountNotFound = false,
+                        Message = "Unable to verify account details at this time. Please try again later."
+                    };
+
+                var result = await response.Content
+                    .ReadFromJsonAsync<BankApiAccountResponse>();
+
+                var account = result?.Body?.FirstOrDefault();
+
+                if (account == null || account.SuccessIndicator != "Success")
+                    return new AccountLookupResultDTO
+                    {
+                        Success = false,
+                        AccountNotFound = true,
+                        Message = "Account does not exist"
+                    };
+
+                return new AccountLookupResultDTO
+                {
+                    Success = true,
+                    Account = new AccountLookupDTO
+                    {
+                        AccountNumber = account.AccountNumber,
+                        AccountName = account.Name
+                    }
+                };
+            }
+            catch
+            {
+                return new AccountLookupResultDTO
+                {
+                    Success = false,
+                    AccountNotFound = false,
+                    Message = "Unable to verify account details at this time. Please try again later."
+                };
+            }
+        }
+
+        public async Task<Statement?> GetStatement(
+            string accountNumber,
+            DateTime startDate,
+            DateTime endDate)
+        {
+            try
+            {
+                string baseUrl = _config["BankApi:BaseUrl"]!;
+
+                string start = startDate.ToString("yyyyMMdd");
+                string end = endDate.ToString("yyyyMMdd");
+
+                string url = $"{baseUrl}/party/account/getAccountStatements.2.1.0" +
+                             $"?accountNumber={accountNumber}" +
+                             $"&startDate={start}" +
+                             $"&endDate={end}";
+
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                AddBankApiHeaders(request);
+
+                request.Headers.Add("disablePagination", "true");
+
+                var response = await _httpClient.SendAsync(request);
 
                 if (!response.IsSuccessStatusCode)
                     return null;
 
-                    //Parsing nested response structure
+                var apiResponse = await response.Content
+                    .ReadFromJsonAsync<BankApiStatementResponse>();
 
-                    var result = await response.Content.ReadFromJsonAsync<BankApiResponse<List<AccountInfo>>>();
+                if (apiResponse == null || apiResponse.Header.Status != "success")
+                    return null;
 
-                    if (result?.Body == null || !result.Body.Any())
-                        return null;
-
-                var account = result.Body.First();
-
-                return new AccountLookupDTO
-                {
-                    AccountNumber= account.AccountNumber,
-                    AccountName = account.Name
-                };
+                return MapToStatement(apiResponse);
             }
             catch
             {
@@ -71,45 +120,77 @@ namespace BankStatementAPI.Services
             }
         }
 
-       // Get statement using the getAccountStatements endpoint
-    public async Task<Statement?> GetStatement(
-        string accountNumber,
-        DateTime startDate,
-        DateTime endDate)
-    {
-        try
+        private Statement MapToStatement(BankApiStatementResponse apiResponse)
         {
-            string baseUrl = _config["BankApi:BaseUrl"]!;
+            var data = apiResponse.Header.Data;
 
-            // Note the date format is YYYYMMDD not YYYY-MM-DD
-            string url = $"{baseUrl}/party/account/getAccountStatements.2.1.0" +
-                         $"?accountNumber={accountNumber}" +
-                         $"&startDate={startDate:yyyyMMdd}" +
-                         $"&endDate={endDate:yyyyMMdd}";
-
-            var response = await _httpClient.GetAsync(url);
-
-            if (!response.IsSuccessStatusCode)
-                return null;
-
-            var result = await response.Content
-                .ReadFromJsonAsync<BankApiResponse<Statement>>();
-
-            if (result?.Body == null)
-                return null;
-
-            result.Body.AccountNumber = string.IsNullOrWhiteSpace(result.Body.AccountNumber)
-                ? accountNumber
-                : result.Body.AccountNumber;
-            result.Body.StartDate = startDate;
-            result.Body.EndDate = endDate;
-
-            return result.Body;
+            return new Statement
+            {
+                AccountNumber = data.AccountNumber,
+                AccountName = data.AccountTitle,
+                Branch = data.Branch,
+                AccountType = data.AccountType,
+                BranchAddress = $"{data.Street}, {data.PostalAddress}",
+                OpeningBalance = decimal.TryParse(data.OpeningBalance, out var ob) ? ob : 0,
+                BookBalance = decimal.TryParse(data.TotalAmount, out var ba) ? ba : 0,
+                ClearBalance = decimal.TryParse(data.ClearedBalance, out var cb) ? cb : 0,
+                TotalDebitValue = decimal.TryParse(data.TotalDebit, out var td) ? td : 0,
+                TotalCreditValue = decimal.TryParse(data.TotalCredit, out var tc) ? tc : 0,
+                TotalDebitCount = apiResponse.Body
+                    .Count(t => !string.IsNullOrEmpty(t.DebitAmount) && t.DebitAmount != "0"),
+                TotalCreditCount = apiResponse.Body
+                    .Count(t => !string.IsNullOrEmpty(t.CreditAmount) && t.CreditAmount != "0"),
+                Transactions = apiResponse.Body.Select(t => new Transaction
+                {
+                    BookingDate = DateTime.TryParse(t.BookingDate, out var bd) ? bd : DateTime.MinValue,
+                    Narrative = string.Join(" ", t.Descriptions.Select(d => d.Description)),
+                    ValueDate = DateTime.TryParse(t.ValueDate, out var vd) ? vd : DateTime.MinValue,
+                    Debit = decimal.TryParse(t.DebitAmount, out var da) ? da : 0,
+                    Credit = decimal.TryParse(t.CreditAmount, out var ca) ? ca : 0,
+                    Balance = decimal.TryParse(t.ClosingBalance, out var clb) ? clb : 0
+                }).ToList()
+            };
         }
-        catch
+
+        public async Task<bool> DebitAccount(string accountNumber, decimal amount)
         {
-            return null;
+            try
+            {
+                string baseUrl = _config["BankApi:BaseUrl"]!;
+                string url = $"{baseUrl}/party/payments/createGenericTransfer";
+
+                var request = new HttpRequestMessage(HttpMethod.Post, url);
+                AddBankApiHeaders(request);
+
+                var body = new
+                {
+                    header = new { },
+                    body = new
+                    {
+                        transactionType = "AC",
+                        debitAccountId = accountNumber,
+                        debitCurrency = "GHS",
+                        debitAmount = amount,
+                        creditAccountId = _config["BankApi:ChargeCollectionAccount"]
+                    }
+                };
+
+                request.Content = JsonContent.Create(body);
+
+                var response = await _httpClient.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                    return false;
+
+                var result = await response.Content
+                    .ReadFromJsonAsync<BankApiTransferResponse>();
+
+                return result?.Header.Status == "success";
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
-}
 }
