@@ -6,6 +6,9 @@ namespace BankStatementAPI.Models
         public string AccountName { get; set; } = "";
         public string Branch { get; set; } = "";
         public string AccountType { get; set; } = "";
+        public string ResidentialAddress { get; set; } = "";
+        public string StreetAddress { get; set; } = "";
+        public string PostalAddress { get; set; } = "";
         public string BranchAddress { get; set; } = "";
         public string Channel { get; set; } = "";
         public DateTime StartDate { get; set; }

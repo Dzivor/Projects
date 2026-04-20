@@ -26,6 +26,16 @@ namespace BankStatementAPI.Services
             Statement statement,
             ChargingResult chargingResult)
         {
+            string postalLine = string.IsNullOrWhiteSpace(statement.PostalAddress)
+                ? "No postal address available"
+                : statement.PostalAddress;
+
+            string streetLine = string.IsNullOrWhiteSpace(statement.StreetAddress)
+                ? (string.IsNullOrWhiteSpace(statement.ResidentialAddress)
+                    ? "No house address available"
+                    : statement.ResidentialAddress)
+                : statement.StreetAddress;
+
             var document = Document.Create(container =>
             {
                 container.Page(page =>
@@ -34,41 +44,41 @@ namespace BankStatementAPI.Services
                     page.Margin(30);
                     page.DefaultTextStyle(x => x.FontSize(9));
 
-                    // ── FOOTER ──
-                    page.Footer().Column(col =>
+                    // ── HEADER ──
+                    page.Header().Column(col =>
                     {
-                        col.Item().BorderTop(1).PaddingTop(5)
-                            .Row(row =>
-                            {
-                                row.RelativeItem().Column(c =>
-                                {
-                                    c.Item().Text(statement.AccountName).Bold();
-                                    c.Item().Text("No postal address available");
-                                    c.Item().Text(statement.BranchAddress);
-                                });
-                            });
+                        col.Item().Column(c =>
+                        {
+                            c.Item().Text(statement.AccountName).Bold();
+                            c.Item().Text(postalLine);
+                            c.Item().Text(streetLine);
+                        });
+
+                        col.Item().PaddingTop(8).Row(row =>
+                        {
+                            row.RelativeItem().Text($"Branch: {statement.Branch}");
+                            row.RelativeItem().AlignCenter()
+                                .Text($"Account Type: {statement.AccountType}");
+                            row.RelativeItem().AlignRight()
+                                .Text($"Account No: {statement.AccountNumber}");
+                        });
 
                         col.Item().PaddingTop(5).Row(row =>
                         {
-                            row.RelativeItem().Text(
-                                $"Branch: {statement.Branch}   " +
-                                $"Account Type: {statement.AccountType}   " +
-                                $"Account No: {statement.AccountNumber}"
-                            );
+                            row.RelativeItem().Text($"Printed On: {DateTime.Now:dd MMM yyyy}");
+                            row.RelativeItem().AlignCenter()
+                                .Text($"From: {statement.StartDate:dd MMM yyyy} To: {statement.EndDate:dd MMM yyyy}")
+                                .Bold();
+                            row.RelativeItem().AlignRight().Text("CCY: GHANA CEDIS");
                         });
 
-                        col.Item().Row(row =>
-                        {
-                            row.RelativeItem().Text(
-                                $"Printed On: {DateTime.Now:dd MMM yyyy}   " +
-                                $"From: {statement.StartDate:dd MMM yyyy}   " +
-                                $"To: {statement.EndDate:dd MMM yyyy}   " +
-                                $"CCY: GHANA CEDIS"
-                            );
-                        });
+                        col.Item().PaddingTop(8).BorderBottom(1);
+                    });
 
-                        col.Item().PaddingTop(5)
-                            .Text(chargingResult.Message)
+                    // ── FOOTER ──
+                    page.Footer().Column(col =>
+                    {
+                        col.Item().Text(chargingResult.Message)
                             .FontColor(
                                 chargingResult.Status == ChargeStatus.Failed
                                     ? "#FF0000" : "#333333"
@@ -78,6 +88,8 @@ namespace BankStatementAPI.Services
                     // ── CONTENT ──
                     page.Content().Column(col =>
                     {
+                        col.Item().PaddingTop(10);
+
                         col.Item().Table(table =>
                         {
                             table.ColumnsDefinition(columns =>
