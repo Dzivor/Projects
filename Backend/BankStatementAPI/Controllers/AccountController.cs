@@ -23,12 +23,17 @@ namespace BankStatementAPI.Controllers
             if (string.IsNullOrEmpty(accountNumber))
                 return BadRequest(new { message = "Account number is required" });
 
-            var account = await _bankApiService.GetAccountDetails(accountNumber);
+            var result = await _bankApiService.GetAccountDetails(accountNumber);
 
-            if (account == null)
-                return NotFound(new { message = "Account does not exist" });
+            if (!result.Success)
+            {
+                if (result.AccountNotFound)
+                    return NotFound(new { message = result.Message });
 
-            return Ok(account);
+                return StatusCode(503, new { message = result.Message });
+            }
+
+            return Ok(result.Account);
         }
     }
 }

@@ -1,3 +1,8 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
+
 namespace BankStatementAPI.Middleware
 {
     public class AuthMiddleware
@@ -5,8 +10,6 @@ namespace BankStatementAPI.Middleware
         private readonly RequestDelegate _next;
         private readonly IConfiguration _config;
 
-        // RequestDelegate represents the next piece of middleware
-        // or the actual endpoint in the pipeline
         public AuthMiddleware(RequestDelegate next, IConfiguration config)
         {
             _next = next;
@@ -15,8 +18,6 @@ namespace BankStatementAPI.Middleware
 
         public async Task InvokeAsync(HttpContext context)
         {
-            // Allow login endpoint through without a token
-            // because the user does not have a token yet
             string path = context.Request.Path.Value ?? "";
 
             if (path.Contains("/api/auth/login"))
@@ -25,7 +26,17 @@ namespace BankStatementAPI.Middleware
                 return;
             }
 
-            // Check for token in the Authorization header
+            // ── TEMPORARY DEV BYPASS ──
+            var env = context.RequestServices
+                .GetRequiredService<IWebHostEnvironment>();
+
+            if (env.IsDevelopment())
+            {
+                await _next(context);
+                return;
+            }
+            // ── END DEV BYPASS ──
+
             string? authHeader = context.Request.Headers["Authorization"];
 
             if (string.IsNullOrEmpty(authHeader) ||
@@ -39,11 +50,12 @@ namespace BankStatementAPI.Middleware
                 return;
             }
 
-            // Extract the token
             string token = authHeader.Substring("Bearer ".Length);
 
-            // Validate the token
-            if (!IsValidToken(token))
+            // ✅ Fixed — using correct method name and return type
+            var principal = ValidateToken(token);
+
+            if (principal == null)
             {
                 context.Response.StatusCode = 401;
                 await context.Response.WriteAsJsonAsync(new
@@ -53,15 +65,43 @@ namespace BankStatementAPI.Middleware
                 return;
             }
 
-            // Token is valid — allow request through
+            // ✅ Fixed — attaching user info to the request
+            context.User = principal;
+
             await _next(context);
         }
 
-        private bool IsValidToken(string token)
+        private ClaimsPrincipal? ValidateToken(string token)
         {
-            // We will add full JWT validation here later
-            // For now just check it is not empty
-            return !string.IsNullOrEmpty(token);
+            try
+            {
+                string jwtKey = _config["Jwt:Key"]!;
+                string jwtIssuer = _config["Jwt:Issuer"]!;
+
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.UTF8.GetBytes(jwtKey);
+
+                var validationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = jwtIssuer,
+                    ValidAudience = jwtIssuer,
+                    IssuerSigningKey = new SymmetricSecurityKey(key)
+                };
+
+                return tokenHandler.ValidateToken(
+                    token,
+                    validationParameters,
+                    out _
+                );
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }
