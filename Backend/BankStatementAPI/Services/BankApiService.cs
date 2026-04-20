@@ -79,7 +79,7 @@ namespace BankStatementAPI.Services
             }
         }
 
-        public async Task<Statement?> GetStatement(
+        public async Task<StatementLookupResultDTO> GetStatement(
             string accountNumber,
             DateTime startDate,
             DateTime endDate)
@@ -104,19 +104,54 @@ namespace BankStatementAPI.Services
                 var response = await _httpClient.SendAsync(request);
 
                 if (!response.IsSuccessStatusCode)
-                    return null;
+                    return new StatementLookupResultDTO
+                    {
+                        Success = false,
+                        StatementNotFound = false,
+                        Message = "Unable to fetch statement at this time. Please try again later."
+                    };
 
                 var apiResponse = await response.Content
                     .ReadFromJsonAsync<BankApiStatementResponse>();
 
-                if (apiResponse == null || apiResponse.Header.Status != "success")
-                    return null;
+                if (apiResponse == null)
+                    return new StatementLookupResultDTO
+                    {
+                        Success = false,
+                        StatementNotFound = false,
+                        Message = "Unable to fetch statement at this time. Please try again later."
+                    };
 
-                return MapToStatement(apiResponse);
+                if (apiResponse.Header.Status != "success")
+                    return new StatementLookupResultDTO
+                    {
+                        Success = false,
+                        StatementNotFound = true,
+                        Message = "No statement found"
+                    };
+
+                if (apiResponse.Body == null || apiResponse.Body.Count == 0)
+                    return new StatementLookupResultDTO
+                    {
+                        Success = false,
+                        StatementNotFound = true,
+                        Message = "No statement found"
+                    };
+
+                return new StatementLookupResultDTO
+                {
+                    Success = true,
+                    Statement = MapToStatement(apiResponse)
+                };
             }
             catch
             {
-                return null;
+                return new StatementLookupResultDTO
+                {
+                    Success = false,
+                    StatementNotFound = false,
+                    Message = "Unable to fetch statement at this time. Please try again later."
+                };
             }
         }
 

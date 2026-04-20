@@ -26,15 +26,19 @@ namespace BankStatementAPI.Services
             Statement statement,
             ChargingResult chargingResult)
         {
-            string postalLine = string.IsNullOrWhiteSpace(statement.PostalAddress)
-                ? "No postal address available"
-                : statement.PostalAddress;
+            bool hasPostalAddress = !string.IsNullOrWhiteSpace(statement.PostalAddress);
 
-            string streetLine = string.IsNullOrWhiteSpace(statement.StreetAddress)
-                ? (string.IsNullOrWhiteSpace(statement.ResidentialAddress)
-                    ? "No house address available"
-                    : statement.ResidentialAddress)
-                : statement.StreetAddress;
+            string postalLine = hasPostalAddress
+                ? statement.PostalAddress
+                : "No postal address available";
+
+            string? streetLine = hasPostalAddress
+                ? (string.IsNullOrWhiteSpace(statement.StreetAddress)
+                    ? (string.IsNullOrWhiteSpace(statement.ResidentialAddress)
+                        ? null
+                        : statement.ResidentialAddress)
+                    : statement.StreetAddress)
+                : null;
 
             var document = Document.Create(container =>
             {
@@ -42,7 +46,7 @@ namespace BankStatementAPI.Services
                 {
                     page.Size(PageSizes.A4);
                     page.Margin(30);
-                    page.DefaultTextStyle(x => x.FontSize(9));
+                    page.DefaultTextStyle(x => x.FontSize(8.5f).FontFamily(Fonts.TimesNewRoman));
 
                     // ── HEADER ──
                     page.Header().Column(col =>
@@ -51,7 +55,9 @@ namespace BankStatementAPI.Services
                         {
                             c.Item().Text(statement.AccountName).Bold();
                             c.Item().Text(postalLine);
-                            c.Item().Text(streetLine);
+
+                            if (!string.IsNullOrWhiteSpace(streetLine))
+                                c.Item().Text(streetLine);
                         });
 
                         col.Item().PaddingTop(8).Row(row =>
@@ -105,39 +111,46 @@ namespace BankStatementAPI.Services
                             // Table header row
                             table.Header(header =>
                             {
-                                header.Cell().Text("Booking Date").Bold();
-                                header.Cell().Text("Narrative").Bold();
-                                header.Cell().Text("Value Date").Bold();
-                                header.Cell().Text("Debit").Bold();
-                                header.Cell().Text("Credit").Bold();
-                                header.Cell().Text("Balance").Bold();
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4)
+                                    .Text("Booking Date").Bold();
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4)
+                                    .Text("Narrative").Bold();
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4)
+                                    .Text("Value Date").Bold();
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4).AlignRight()
+                                    .Text("Debit").Bold();
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4).AlignRight()
+                                    .Text("Credit").Bold();
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4).AlignRight()
+                                    .Text("Balance").Bold();
                             });
 
                             // Opening balance row
-                            table.Cell().ColumnSpan(5)
+                            table.Cell().ColumnSpan(5).PaddingVertical(3)
                                 .Text("Balance Brought Forward:");
-                            table.Cell().AlignRight()
+                            table.Cell().PaddingVertical(3).AlignRight()
                                 .Text($"{statement.OpeningBalance:N2}");
 
                             // Transaction rows — using updated field names
                             foreach (var t in statement.Transactions)
                             {
-                                table.Cell().Text(
+                                table.Cell().PaddingVertical(3).Text(
                                     t.BookingDate        // ← updated from Date
                                     .ToString("dd MMM yyyy")
                                     .ToUpper()
                                 );
-                                table.Cell().Text(t.Narrative);  // ← updated from Description
-                                table.Cell().Text(
+                                table.Cell().PaddingVertical(3)
+                                    .Text(t.Narrative);  // ← updated from Description
+                                table.Cell().PaddingVertical(3).Text(
                                     t.ValueDate          // ← new field
                                     .ToString("dd MMM yyyy")
                                     .ToUpper()
                                 );
-                                table.Cell().AlignRight()
+                                table.Cell().PaddingVertical(3).AlignRight()
                                     .Text(t.Debit > 0 ? $"{t.Debit:N2}" : "");
-                                table.Cell().AlignRight()
+                                table.Cell().PaddingVertical(3).AlignRight()
                                     .Text(t.Credit > 0 ? $"{t.Credit:N2}" : "");
-                                table.Cell().AlignRight()
+                                table.Cell().PaddingVertical(3).AlignRight()
                                     .Text($"{t.Balance:N2}");
                             }
                         });

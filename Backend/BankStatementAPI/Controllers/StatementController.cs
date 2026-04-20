@@ -43,12 +43,19 @@ namespace BankStatementAPI.Controllers
             DateTime endDate = parseResult.EndDate;
 
             // Step 3 — Fetch statement from bank API
-            var statement = await _bankApiService.GetStatement(
+            var statementResult = await _bankApiService.GetStatement(
                 request.AccountNumber, startDate, endDate
             );
 
-            if (statement == null)
-                return NotFound(new { message = "No statement found" });
+            if (!statementResult.Success)
+            {
+                if (statementResult.StatementNotFound)
+                    return NotFound(new { message = statementResult.Message });
+
+                return StatusCode(503, new { message = statementResult.Message });
+            }
+
+            var statement = statementResult.Statement!;
 
             // Step 4 — Calculate number of pages
             int numberOfPages = _pdfService.CalculateNumberOfPages(statement);
@@ -96,12 +103,19 @@ namespace BankStatementAPI.Controllers
             DateTime endDate = parseResult.EndDate;
 
             // Step 3 — Fetch statement from bank API
-            var statement = await _bankApiService.GetStatement(
+            var statementResult = await _bankApiService.GetStatement(
                 request.AccountNumber, startDate, endDate
             );
 
-            if (statement == null)
-                return NotFound(new { message = "No statement found" });
+            if (!statementResult.Success)
+            {
+                if (statementResult.StatementNotFound)
+                    return NotFound(new { message = statementResult.Message });
+
+                return StatusCode(503, new { message = statementResult.Message });
+            }
+
+            var statement = statementResult.Statement!;
 
             // Step 4 — Calculate pages
             int numberOfPages = _pdfService.CalculateNumberOfPages(statement);
