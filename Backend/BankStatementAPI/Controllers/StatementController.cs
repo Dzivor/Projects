@@ -1,6 +1,7 @@
 using BankStatementAPI.DTOs;
 using BankStatementAPI.Models;
 using BankStatementAPI.Services;
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BankStatementAPI.Controllers
@@ -34,8 +35,12 @@ namespace BankStatementAPI.Controllers
             if (validation != null) return validation;
 
             // Step 2 — Parse dates
-            DateTime startDate = DateTime.Parse(request.StartDate);
-            DateTime endDate = DateTime.Parse(request.EndDate);
+            var parseResult = TryParseDateRange(request.StartDate, request.EndDate);
+            if (!parseResult.Success)
+                return BadRequest(new { message = parseResult.Message });
+
+            DateTime startDate = parseResult.StartDate;
+            DateTime endDate = parseResult.EndDate;
 
             // Step 3 — Fetch statement from bank API
             var statement = await _bankApiService.GetStatement(
@@ -83,8 +88,12 @@ namespace BankStatementAPI.Controllers
             if (validation != null) return validation;
 
             // Step 2 — Parse dates
-            DateTime startDate = DateTime.Parse(request.StartDate);
-            DateTime endDate = DateTime.Parse(request.EndDate);
+            var parseResult = TryParseDateRange(request.StartDate, request.EndDate);
+            if (!parseResult.Success)
+                return BadRequest(new { message = parseResult.Message });
+
+            DateTime startDate = parseResult.StartDate;
+            DateTime endDate = parseResult.EndDate;
 
             // Step 3 — Fetch statement from bank API
             var statement = await _bankApiService.GetStatement(
@@ -108,6 +117,8 @@ namespace BankStatementAPI.Controllers
 
             // Step 7 — Generate PDF
             statement.Channel = request.Channel;
+            statement.StartDate = startDate;
+            statement.EndDate = endDate;
             byte[] pdf = _pdfService.GenerateStatement(statement, chargingResult);
 
             // Step 8 — Return PDF as downloadable file
@@ -142,6 +153,57 @@ namespace BankStatementAPI.Controllers
                 });
 
             return null;
+        }
+
+        private static (bool Success, DateTime StartDate, DateTime EndDate, string Message)
+            TryParseDateRange(string startDateInput, string endDateInput)
+        {
+            string[] acceptedFormats =
+            {
+                "yyyy-MM-dd",
+                "dd-MM-yyyy",
+                "yyyyMMdd",
+                "dd/MM/yyyy",
+                "MM/dd/yyyy"
+            };
+
+            bool startIsValid = DateTime.TryParseExact(
+                startDateInput,
+                acceptedFormats,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out var startDate
+            );
+
+            bool endIsValid = DateTime.TryParseExact(
+                endDateInput,
+                acceptedFormats,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out var endDate
+            );
+
+            if (!startIsValid || !endIsValid)
+            {
+                return (
+                    false,
+                    default,
+                    default,
+                    "Invalid date format. Use yyyy-MM-dd or dd-MM-yyyy."
+                );
+            }
+
+            if (startDate > endDate)
+            {
+                return (
+                    false,
+                    default,
+                    default,
+                    "Start date cannot be later than end date."
+                );
+            }
+
+            return (true, startDate, endDate, string.Empty);
         }
     }
 }
