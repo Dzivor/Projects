@@ -24,9 +24,9 @@ namespace BankStatementAPI.Services
                 request.Password
             );
 
-            // Step 2 — If AD validation failed return null
+            // Step 2 — If AD validation failed throw unauthorized error
             if (staffInfo == null)
-                return null;
+                throw new UnauthorizedAccessException("Invalid username or password");
 
             // Step 3 — Generate JWT token
             string token = GenerateJwtToken(staffInfo);

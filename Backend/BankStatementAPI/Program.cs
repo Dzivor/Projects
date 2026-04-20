@@ -25,6 +25,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<BankApiService>();
 builder.Services.AddScoped<ChargingService>();
 builder.Services.AddScoped<PdfService>();
+builder.Services.AddScoped<AuthService>();
 
 //frontend connection
 builder.Services.AddCors(options =>

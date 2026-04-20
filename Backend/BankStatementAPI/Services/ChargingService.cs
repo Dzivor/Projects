@@ -81,7 +81,7 @@ namespace BankStatementAPI.Services
                 return preview;
             }
 
-            // Attempt to debit the account
+          /*  // Attempt to debit the account
             bool debitSuccessful = await _bankApiService
                 .DebitAccount(preview.AccountCharged!, preview.TotalCharge);
 
@@ -96,7 +96,7 @@ namespace BankStatementAPI.Services
                     Message = $"Insufficient funds on account {preview.AccountCharged}"
                 };
             }
-
+*/
             return new ChargingResult
             {
                 TotalCharge = preview.TotalCharge,
