@@ -9,7 +9,7 @@ namespace BankStatementAPI.Models
        // Staff Information
         public string StaffUsername{get; set;}="";
         public string StaffId{get; set;}="";
-        public String StaffFullName {get; set;}="";
+        public string StaffFullName {get; set;}="";
 
         //Statement Request Details
         public string AccountNumber {get; set;}="";
