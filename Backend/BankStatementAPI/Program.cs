@@ -25,6 +25,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<BankApiService>();
 builder.Services.AddScoped<ChargingService>();
 builder.Services.AddScoped<PdfService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<AuditService>();
 
 //frontend connection
 builder.Services.AddCors(options =>
@@ -33,9 +35,12 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins("http://localhost:5173") // Replace with your frontend URL
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
+
+
 
 //build
 

@@ -1,6 +1,8 @@
 using BankStatementAPI.DTOs;
 using BankStatementAPI.Models;
 using BankStatementAPI.Services;
+using System.Globalization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BankStatementAPI.Controllers
@@ -12,15 +14,18 @@ namespace BankStatementAPI.Controllers
         private readonly BankApiService _bankApiService;
         private readonly ChargingService _chargingService;
         private readonly PdfService _pdfService;
+        private readonly AuditService _auditService;
 
         public StatementController(
             BankApiService bankApiService,
             ChargingService chargingService,
-            PdfService pdfService)
+            PdfService pdfService,
+            AuditService auditService)
         {
             _bankApiService = bankApiService;
             _chargingService = chargingService;
             _pdfService = pdfService;
+            _auditService = auditService;
         }
 
         // POST /api/statement/preview
@@ -34,16 +39,27 @@ namespace BankStatementAPI.Controllers
             if (validation != null) return validation;
 
             // Step 2 — Parse dates
-            DateTime startDate = DateTime.Parse(request.StartDate);
-            DateTime endDate = DateTime.Parse(request.EndDate);
+            var parseResult = TryParseDateRange(request.StartDate, request.EndDate);
+            if (!parseResult.Success)
+                return BadRequest(new { message = parseResult.Message });
+
+            DateTime startDate = parseResult.StartDate;
+            DateTime endDate = parseResult.EndDate;
 
             // Step 3 — Fetch statement from bank API
-            var statement = await _bankApiService.GetStatement(
+            var statementResult = await _bankApiService.GetStatement(
                 request.AccountNumber, startDate, endDate
             );
 
-            if (statement == null)
-                return NotFound(new { message = "No statement found" });
+            if (!statementResult.Success)
+            {
+                if (statementResult.StatementNotFound)
+                    return NotFound(new { message = statementResult.Message });
+
+                return StatusCode(503, new { message = statementResult.Message });
+            }
+
+            var statement = statementResult.Statement!;
 
             // Step 4 — Calculate number of pages
             int numberOfPages = _pdfService.CalculateNumberOfPages(statement);
@@ -59,7 +75,16 @@ namespace BankStatementAPI.Controllers
                 TotalCharge = chargePreview.TotalCharge,
                 AccountToCharge = chargePreview.AccountCharged,
                 ChargeMessage = chargePreview.Message,
-                AccountName = statement.AccountName
+                AccountName = statement.AccountName,
+                AccountNumber = statement.AccountNumber,
+                Branch = statement.Branch,
+                AccountType = statement.AccountType,
+                BookBalance = statement.BookBalance,
+                ClearBalance = statement.ClearBalance,
+                TotalDebitValue = statement.TotalDebitValue,
+                TotalCreditValue = statement.TotalCreditValue,
+                TotalDebitCount = statement.TotalDebitCount,
+                TotalCreditCount = statement.TotalCreditCount
             });
         }
 
@@ -74,16 +99,27 @@ namespace BankStatementAPI.Controllers
             if (validation != null) return validation;
 
             // Step 2 — Parse dates
-            DateTime startDate = DateTime.Parse(request.StartDate);
-            DateTime endDate = DateTime.Parse(request.EndDate);
+            var parseResult = TryParseDateRange(request.StartDate, request.EndDate);
+            if (!parseResult.Success)
+                return BadRequest(new { message = parseResult.Message });
+
+            DateTime startDate = parseResult.StartDate;
+            DateTime endDate = parseResult.EndDate;
 
             // Step 3 — Fetch statement from bank API
-            var statement = await _bankApiService.GetStatement(
+            var statementResult = await _bankApiService.GetStatement(
                 request.AccountNumber, startDate, endDate
             );
 
-            if (statement == null)
-                return NotFound(new { message = "No statement found" });
+            if (!statementResult.Success)
+            {
+                if (statementResult.StatementNotFound)
+                    return NotFound(new { message = statementResult.Message });
+
+                return StatusCode(503, new { message = statementResult.Message });
+            }
+
+            var statement = statementResult.Statement!;
 
             // Step 4 — Calculate pages
             int numberOfPages = _pdfService.CalculateNumberOfPages(statement);
@@ -99,7 +135,34 @@ namespace BankStatementAPI.Controllers
 
             // Step 7 — Generate PDF
             statement.Channel = request.Channel;
+            statement.StartDate = startDate;
+            statement.EndDate = endDate;
             byte[] pdf = _pdfService.GenerateStatement(statement, chargingResult);
+
+            string staffUsername = User.Identity?.Name ?? request.StaffUsername;
+            string staffFullName =
+                User.FindFirst(ClaimTypes.GivenName)?.Value ?? staffUsername;
+            string staffId =
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? staffUsername;
+
+            try
+            {
+                await _auditService.LogStatement(
+                    staffUsername,
+                    staffFullName,
+                    request.AccountNumber,
+                    statement.AccountName,
+                    startDate,
+                    endDate,
+                    request.Channel,
+                    staffId,
+                    chargingResult
+                );
+            }
+            catch
+            {
+                // Keep statement generation successful even if audit insert fails.
+            }
 
             // Step 8 — Return PDF as downloadable file
             return File(pdf, "application/pdf",
@@ -133,6 +196,57 @@ namespace BankStatementAPI.Controllers
                 });
 
             return null;
+        }
+
+        private static (bool Success, DateTime StartDate, DateTime EndDate, string Message)
+            TryParseDateRange(string startDateInput, string endDateInput)
+        {
+            string[] acceptedFormats =
+            {
+                "yyyy-MM-dd",
+                "dd-MM-yyyy",
+                "yyyyMMdd",
+                "dd/MM/yyyy",
+                "MM/dd/yyyy"
+            };
+
+            bool startIsValid = DateTime.TryParseExact(
+                startDateInput,
+                acceptedFormats,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out var startDate
+            );
+
+            bool endIsValid = DateTime.TryParseExact(
+                endDateInput,
+                acceptedFormats,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out var endDate
+            );
+
+            if (!startIsValid || !endIsValid)
+            {
+                return (
+                    false,
+                    default,
+                    default,
+                    "Invalid date format. Use yyyy-MM-dd or dd-MM-yyyy."
+                );
+            }
+
+            if (startDate > endDate)
+            {
+                return (
+                    false,
+                    default,
+                    default,
+                    "Start date cannot be later than end date."
+                );
+            }
+
+            return (true, startDate, endDate, string.Empty);
         }
     }
 }

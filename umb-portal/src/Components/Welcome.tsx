@@ -1,11 +1,16 @@
 import { LogOut } from "lucide-react";
+import { useNavigate } from "react-router";
+import { logoutUser } from "../services/session";
 
 function Welcome() {
+  const navigate = useNavigate();
+
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#fff7e0_0%,#f3f7fb_45%,#eef3fa_100%)] px-4 py-10 sm:py-14">
       <div className="mb-6 flex justify-end">
         <button
           type="button"
+          onClick={() => logoutUser(navigate)}
           className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
         >
           <LogOut size={14} />
@@ -27,6 +32,7 @@ function Welcome() {
         <div className="grid gap-4 sm:grid-cols-2">
           <button
             type="button"
+            onClick={() => navigate("/Statement")}
             className="rounded-xl border border-[#d69f21] bg-[#f3b21b] px-6 py-4 text-base font-semibold text-[#1a1302] shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition hover:brightness-95"
           >
             Visa Statement
@@ -34,6 +40,7 @@ function Welcome() {
 
           <button
             type="button"
+            onClick={() => navigate("/esb-statement")}
             className="rounded-xl border border-[#d69f21] bg-[#f8fafc] px-6 py-4 text-base font-semibold text-slate-900 transition hover:bg-[#fff7e3]"
           >
             ESB Statement
