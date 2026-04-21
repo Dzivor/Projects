@@ -11,6 +11,7 @@ function Login() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const isDevBypassEnabled = import.meta.env.DEV;
 
   const formik = useFormik({
     initialValues: {
@@ -20,7 +21,24 @@ function Login() {
     onSubmit: async (values) => {
       setErrorMessage("");
       setIsSubmitting(true);
+      // In development mode, bypass actual login for faster testing
 
+      if (isDevBypassEnabled) {
+        const devUser = {
+          token: "dev-bypass-token",
+          username: values.username || "dev.user",
+          firstName: "Developer",
+          expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+        };
+
+        localStorage.setItem("authToken", devUser.token);
+        localStorage.setItem("authUser", JSON.stringify(devUser));
+
+        navigate("/welcome");
+        setIsSubmitting(false);
+        return;
+      }
+      ///////////////////////////////////////////////////////////
       try {
         const result = await login(values);
 
