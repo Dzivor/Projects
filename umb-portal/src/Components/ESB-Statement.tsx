@@ -2,24 +2,76 @@ import { useFormik } from "formik";
 import { AxiosError } from "axios";
 import { useEffect, useState } from "react";
 import { CalendarDays, LogOut } from "lucide-react";
-import { lookupAccount } from "../services/statement";
+import {
+  generateStatementPdf,
+  lookupAccount,
+  type StatementRequest,
+} from "../services/statement";
 
-const VisaStatement = () => {
+const ESBStatement = () => {
+  const [isPrintLoading, setIsPrintLoading] = useState(false);
   const [isLookupLoading, setIsLookupLoading] = useState(false);
   const [accountName, setAccountName] = useState("");
-  const [lookupError, setLookupError] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const buildRequestPayload = (values: {
+    accountNumber: string;
+    startDate: string;
+    endDate: string;
+  }): StatementRequest => {
+    const authUserRaw = localStorage.getItem("authUser");
+    const authUser = authUserRaw ? JSON.parse(authUserRaw) : null;
+
+    return {
+      accountNumber: values.accountNumber,
+      startDate: values.startDate,
+      endDate: values.endDate,
+      channel: "ESB",
+      waiveCharge: false,
+      chargeAltAccount: false,
+      staffUsername: authUser?.username ?? "dev.user",
+    };
+  };
+
+  const handlePrint = async (values: {
+    accountNumber: string;
+    startDate: string;
+    endDate: string;
+  }) => {
+    setErrorMessage("");
+    setIsPrintLoading(true);
+
+    try {
+      const payload = buildRequestPayload(values);
+      const pdfBlob = await generateStatementPdf(payload);
+
+      const downloadUrl = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `ESB_Statement_${payload.accountNumber}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        setErrorMessage(
+          error.response?.data?.message ?? "Print failed. Please try again.",
+        );
+      } else {
+        setErrorMessage("Print failed. Please try again.");
+      }
+    } finally {
+      setIsPrintLoading(false);
+    }
+  };
 
   const formik = useFormik({
     initialValues: {
       accountNumber: "",
       startDate: "",
       endDate: "",
-      chargeAccNumber: "",
-      chargeAltAccount: false,
-      waiveCharge: false,
     },
-    onSubmit: () => {
-      // static phase: no auth call yet
+    onSubmit: async (values) => {
+      await handlePrint(values);
     },
   });
 
@@ -28,12 +80,12 @@ const VisaStatement = () => {
 
     if (!normalizedAccountNumber) {
       setAccountName("");
-      setLookupError("");
+      setErrorMessage("");
       return;
     }
 
     setIsLookupLoading(true);
-    setLookupError("");
+    setErrorMessage("");
 
     try {
       const account = await lookupAccount(normalizedAccountNumber);
@@ -41,12 +93,12 @@ const VisaStatement = () => {
     } catch (error) {
       setAccountName("");
       if (error instanceof AxiosError) {
-        setLookupError(
+        setErrorMessage(
           error.response?.data?.message ??
             "Unable to resolve account name. Please verify account number.",
         );
       } else {
-        setLookupError("Unable to resolve account name.");
+        setErrorMessage("Unable to resolve account name.");
       }
     } finally {
       setIsLookupLoading(false);
@@ -63,7 +115,7 @@ const VisaStatement = () => {
 
     if (!accountNumber) {
       setAccountName("");
-      setLookupError("");
+      setErrorMessage("");
       return;
     }
 
@@ -95,11 +147,11 @@ const VisaStatement = () => {
       </div>
 
       <section className="flex flex-col items-center justify-center">
-        <h1 className="text-3xl font-bold mb-8 ">VISA Statement</h1>
+        <h1 className="text-3xl font-bold mb-8 ">ESB Statement</h1>
         <h2 className="font-bold text-zinc-600">
-          Welcome to your VISA Statement
+          Welcome to your ESB Statement
         </h2>
-        <p className="text-sm">Enter the details to preview charges</p>
+        <p className="text-sm">Enter the details to print your statement</p>
       </section>
 
       <div className="flex items-center justify-center px-2 py-8">
@@ -119,6 +171,7 @@ const VisaStatement = () => {
             value={formik.values.accountNumber}
             onChange={formik.handleChange}
             onBlur={handleAccountLookup}
+            required
             placeholder="Enter Account Number"
             className="w-full rounded border p-2"
           />
@@ -147,6 +200,7 @@ const VisaStatement = () => {
               value={formik.values.startDate}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
+              required
               onKeyDown={blockManualDateTyping}
               onPaste={(e) => e.preventDefault()}
               className="w-full rounded border p-2 pr-10"
@@ -156,20 +210,6 @@ const VisaStatement = () => {
               className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-amber-500"
             />
           </div>
-          <label
-            htmlFor="chargeAltAccount"
-            className="text-sm font-medium text-slate-700"
-          >
-            Charge Alt Account:
-          </label>
-          <input
-            id="chargeAltAccount"
-            type="checkbox"
-            name="chargeAltAccount"
-            checked={formik.values.chargeAltAccount}
-            onChange={formik.handleChange}
-            className="h-4 w-4 justify-self-start accent-amber-500"
-          />
 
           <label
             htmlFor="endDate"
@@ -185,6 +225,7 @@ const VisaStatement = () => {
               value={formik.values.endDate}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
+              required
               onKeyDown={blockManualDateTyping}
               onPaste={(e) => e.preventDefault()}
               className="w-full rounded border p-2 pr-10"
@@ -195,50 +236,23 @@ const VisaStatement = () => {
             />
           </div>
 
-          <label
-            htmlFor="chargeAccNumber"
-            className="text-sm font-medium text-slate-700"
-          >
-            Charge Account Number:
-          </label>
-          <input
-            id="chargeAccNumber"
-            name="chargeAccNumber"
-            value={formik.values.chargeAccNumber}
-            onChange={formik.handleChange}
-            placeholder=" "
-            className="w-full rounded border p-2"
-          />
-          <label
-            htmlFor="waiveCharge"
-            className="text-sm font-medium text-slate-700"
-          >
-            Waive Charge:
-          </label>
-          <input
-            id="waiveCharge"
-            type="checkbox"
-            name="waiveCharge"
-            checked={formik.values.waiveCharge}
-            onChange={formik.handleChange}
-            className="h-4 w-4 justify-self-start accent-amber-500"
-          />
-
-          <div />
-          <button
-            type="submit"
-            className="justify-self-start rounded bg-amber-400 px-4 py-2 text-white"
-          >
-            Preview Charges
-          </button>
+          <div className="col-span-2 flex justify-center">
+            <button
+              type="submit"
+              disabled={isPrintLoading}
+              className="rounded bg-amber-400 px-4 py-2 text-white"
+            >
+              {isPrintLoading ? "Printing..." : "Print"}
+            </button>
+          </div>
         </form>
       </div>
 
-      {lookupError && (
-        <p className="mb-4 text-center text-sm text-red-600">{lookupError}</p>
+      {errorMessage && (
+        <p className="mb-4 text-center text-sm text-red-600">{errorMessage}</p>
       )}
     </main>
   );
 };
 
-export default VisaStatement;
+export default ESBStatement;
