@@ -2,6 +2,7 @@ using BankStatementAPI.DTOs;
 using BankStatementAPI.Models;
 using BankStatementAPI.Services;
 using System.Globalization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BankStatementAPI.Controllers
@@ -13,15 +14,18 @@ namespace BankStatementAPI.Controllers
         private readonly BankApiService _bankApiService;
         private readonly ChargingService _chargingService;
         private readonly PdfService _pdfService;
+        private readonly AuditService _auditService;
 
         public StatementController(
             BankApiService bankApiService,
             ChargingService chargingService,
-            PdfService pdfService)
+            PdfService pdfService,
+            AuditService auditService)
         {
             _bankApiService = bankApiService;
             _chargingService = chargingService;
             _pdfService = pdfService;
+            _auditService = auditService;
         }
 
         // POST /api/statement/preview
@@ -134,6 +138,31 @@ namespace BankStatementAPI.Controllers
             statement.StartDate = startDate;
             statement.EndDate = endDate;
             byte[] pdf = _pdfService.GenerateStatement(statement, chargingResult);
+
+            string staffUsername = User.Identity?.Name ?? request.StaffUsername;
+            string staffFullName =
+                User.FindFirst(ClaimTypes.GivenName)?.Value ?? staffUsername;
+            string staffId =
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? staffUsername;
+
+            try
+            {
+                await _auditService.LogStatement(
+                    staffUsername,
+                    staffFullName,
+                    request.AccountNumber,
+                    statement.AccountName,
+                    startDate,
+                    endDate,
+                    request.Channel,
+                    staffId,
+                    chargingResult
+                );
+            }
+            catch
+            {
+                // Keep statement generation successful even if audit insert fails.
+            }
 
             // Step 8 — Return PDF as downloadable file
             return File(pdf, "application/pdf",

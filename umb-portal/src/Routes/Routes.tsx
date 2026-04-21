@@ -1,14 +1,14 @@
 import { Route, Routes } from "react-router";
 import Welcome from "../Components/Welcome";
 import Login from "../Components/Login";
-import EsbStatement from "../Components/EsbStatement";
+import Statement from "../Components/Statement";
 
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
+      <Route path="/" element={<Login />} />
       <Route path="/welcome" element={<Welcome />} />
-      <Route path="/esb_statement" element={<EsbStatement />} />
+      <Route path="/statement" element={<Statement />} />
     </Routes>
   );
 };
