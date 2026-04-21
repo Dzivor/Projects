@@ -29,7 +29,7 @@ namespace BankStatementAPI.Services
                 return new ChargingResult
                 {
                     TotalCharge = 0,
-                    AccountCharged = null,
+                    AccountCharged = string.Empty,
                     Status = ChargeStatus.Free,
                     NumberOfPages = numberOfPages,
                     Message = "No charge applicable for ESB channel"
@@ -42,7 +42,7 @@ namespace BankStatementAPI.Services
                 return new ChargingResult
                 {
                     TotalCharge = 0,
-                    AccountCharged = null,
+                    AccountCharged = string.Empty,
                     Status = ChargeStatus.Waived,
                     NumberOfPages = numberOfPages,
                     Message = "Charge has been waived"
@@ -81,7 +81,7 @@ namespace BankStatementAPI.Services
                 return preview;
             }
 
-            // Attempt to debit the account
+          /*  // Attempt to debit the account
             bool debitSuccessful = await _bankApiService
                 .DebitAccount(preview.AccountCharged!, preview.TotalCharge);
 
@@ -96,7 +96,7 @@ namespace BankStatementAPI.Services
                     Message = $"Insufficient funds on account {preview.AccountCharged}"
                 };
             }
-
+*/
             return new ChargingResult
             {
                 TotalCharge = preview.TotalCharge,

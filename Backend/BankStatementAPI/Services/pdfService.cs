@@ -9,149 +9,173 @@ namespace BankStatementAPI.Services
     {
         public PdfService()
         {
-            // Required by QuestPDF for non-commercial use
             QuestPDF.Settings.License = LicenseType.Community;
+        }
+
+        // Calculates pages based on transaction count
+        public int CalculateNumberOfPages(Statement statement)
+        {
+            const int transactionsPerPage = 30;
+            int pages = (int)Math.Ceiling(
+                (double)statement.Transactions.Count / transactionsPerPage
+            );
+            return Math.Max(1, pages);
         }
 
         public byte[] GenerateStatement(
             Statement statement,
             ChargingResult chargingResult)
         {
+            bool hasPostalAddress = !string.IsNullOrWhiteSpace(statement.PostalAddress);
+
+            string postalLine = hasPostalAddress
+                ? statement.PostalAddress
+                : "No postal address available";
+
+            string? streetLine = hasPostalAddress
+                ? (string.IsNullOrWhiteSpace(statement.StreetAddress)
+                    ? (string.IsNullOrWhiteSpace(statement.ResidentialAddress)
+                        ? null
+                        : statement.ResidentialAddress)
+                    : statement.StreetAddress)
+                : null;
+
             var document = Document.Create(container =>
             {
                 container.Page(page =>
                 {
                     page.Size(PageSizes.A4);
-                    page.Margin(40);
-                    page.DefaultTextStyle(x => x.FontSize(10));
+                    page.Margin(30);
+                    page.DefaultTextStyle(x => x.FontSize(8.5f).FontFamily(Fonts.TimesNewRoman));
 
                     // ── HEADER ──
                     page.Header().Column(col =>
                     {
-                        col.Item().Row(row =>
+                        col.Item().Column(c =>
                         {
-                            row.RelativeItem().Text("UMB BANK")
-                                .FontSize(20)
-                                .Bold()
-                                .FontColor("#E6A817");
+                            c.Item().Text(statement.AccountName).Bold();
+                            c.Item().Text(postalLine);
 
-                            row.ConstantItem(150).AlignRight()
-                                .Text($"Statement of Account")
-                                .FontSize(12)
+                            if (!string.IsNullOrWhiteSpace(streetLine))
+                                c.Item().Text(streetLine);
+                        });
+
+                        col.Item().PaddingTop(8).Row(row =>
+                        {
+                            row.RelativeItem().Text($"Branch: {statement.Branch}");
+                            row.RelativeItem().AlignCenter()
+                                .Text($"Account Type: {statement.AccountType}");
+                            row.RelativeItem().AlignRight()
+                                .Text($"Account No: {statement.AccountNumber}");
+                        });
+
+                        col.Item().PaddingTop(5).Row(row =>
+                        {
+                            row.RelativeItem().Text($"Printed On: {DateTime.Now:dd MMM yyyy}");
+                            row.RelativeItem().AlignCenter()
+                                .Text($"From: {statement.StartDate:dd MMM yyyy} To: {statement.EndDate:dd MMM yyyy}")
                                 .Bold();
+                            row.RelativeItem().AlignRight().Text("CCY: GHANA CEDIS");
                         });
 
-                        col.Item().BorderBottom(1).BorderColor("#E6A817").PaddingBottom(5);
-
-                        // Account details
-                        col.Item().PaddingTop(10).Row(row =>
-                        {
-                            row.RelativeItem().Column(c =>
-                            {
-                                c.Item().Text($"Account Name: {statement.AccountName}").Bold();
-                                c.Item().Text($"Account Number: {statement.AccountNumber}");
-                                c.Item().Text($"Channel: {statement.Channel}");
-                            });
-
-                            row.RelativeItem().Column(c =>
-                            {
-                                c.Item().Text($"Period: {statement.StartDate:dd/MM/yyyy} - {statement.EndDate:dd/MM/yyyy}");
-                                c.Item().Text($"Opening Balance: GHS {statement.OpeningBalance:N2}");
-                                c.Item().Text($"Closing Balance: GHS {statement.ClosingBalance:N2}");
-                            });
-                        });
-                    });
-
-                    // ── CONTENT — TRANSACTIONS TABLE ──
-                    page.Content().PaddingTop(20).Column(col =>
-                    {
-                        col.Item().Table(table =>
-                        {
-                            // Define columns
-                            table.ColumnsDefinition(columns =>
-                            {
-                                columns.RelativeColumn(2);   // Date
-                                columns.RelativeColumn(4);   // Description
-                                columns.RelativeColumn(2);   // Debit
-                                columns.RelativeColumn(2);   // Credit
-                                columns.RelativeColumn(2);   // Balance
-                            });
-
-                            // Table header
-                            table.Header(header =>
-                            {
-                                header.Cell().Background("#E6A817")
-                                    .Padding(5).Text("Date").Bold();
-                                header.Cell().Background("#E6A817")
-                                    .Padding(5).Text("Description").Bold();
-                                header.Cell().Background("#E6A817")
-                                    .Padding(5).Text("Debit").Bold();
-                                header.Cell().Background("#E6A817")
-                                    .Padding(5).Text("Credit").Bold();
-                                header.Cell().Background("#E6A817")
-                                    .Padding(5).Text("Balance").Bold();
-                            });
-
-                            // Transaction rows
-                            foreach (var transaction in statement.Transactions)
-                            {
-                                table.Cell().Padding(5)
-                                    .Text(transaction.Date.ToString("dd/MM/yyyy"));
-                                table.Cell().Padding(5)
-                                    .Text(transaction.Narrative);
-                                table.Cell().Padding(5)
-                                    .Text(transaction.Debit > 0
-                                        ? $"GHS {transaction.Debit:N2}" : "-");
-                                table.Cell().Padding(5)
-                                    .Text(transaction.Credit > 0
-                                        ? $"GHS {transaction.Credit:N2}" : "-");
-                                table.Cell().Padding(5)
-                                    .Text($"GHS {transaction.Balance:N2}");
-                            }
-                        });
+                        col.Item().PaddingTop(8).BorderBottom(1);
                     });
 
                     // ── FOOTER ──
                     page.Footer().Column(col =>
                     {
-                        col.Item().BorderTop(1).BorderColor("#E6A817").PaddingTop(5);
+                        col.Item().Text(chargingResult.Message)
+                            .FontColor(
+                                chargingResult.Status == ChargeStatus.Failed
+                                    ? "#FF0000" : "#333333"
+                            );
+                    });
 
-                        // Charge information
-                        col.Item().Row(row =>
+                    // ── CONTENT ──
+                    page.Content().Column(col =>
+                    {
+                        col.Item().PaddingTop(10);
+
+                        col.Item().Table(table =>
                         {
-                            row.RelativeItem().Text(chargingResult.Message)
-                                .FontSize(9)
-                                .FontColor(
-                                    chargingResult.Status == ChargeStatus.Failed
-                                        ? "#FF0000" : "#333333"
-                                );
-
-                            // Page numbers
-                            row.ConstantItem(100).AlignRight().Text(text =>
+                            table.ColumnsDefinition(columns =>
                             {
-                                text.Span("Page ");
-                                text.CurrentPageNumber();
-                                text.Span(" of ");
-                                text.TotalPages();
+                                columns.RelativeColumn(2); // Booking Date
+                                columns.RelativeColumn(4); // Narrative
+                                columns.RelativeColumn(2); // Value Date
+                                columns.RelativeColumn(2); // Debit
+                                columns.RelativeColumn(2); // Credit
+                                columns.RelativeColumn(2); // Balance
                             });
+
+                            // Table header row
+                            table.Header(header =>
+                            {
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4)
+                                    .Text("Booking Date").Bold();
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4)
+                                    .Text("Narrative").Bold();
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4)
+                                    .Text("Value Date").Bold();
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4).AlignRight()
+                                    .Text("Debit").Bold();
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4).AlignRight()
+                                    .Text("Credit").Bold();
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4).AlignRight()
+                                    .Text("Balance").Bold();
+                            });
+
+                            // Opening balance row
+                            table.Cell().ColumnSpan(5).PaddingVertical(3)
+                                .Text("Balance Brought Forward:");
+                            table.Cell().PaddingVertical(3).AlignRight()
+                                .Text($"{statement.OpeningBalance:N2}");
+
+                            // Transaction rows — using updated field names
+                            foreach (var t in statement.Transactions)
+                            {
+                                table.Cell().PaddingVertical(3).Text(
+                                    t.BookingDate        // ← updated from Date
+                                    .ToString("dd MMM yyyy")
+                                    .ToUpper()
+                                );
+                                table.Cell().PaddingVertical(3)
+                                    .Text(t.Narrative);  // ← updated from Description
+                                table.Cell().PaddingVertical(3).Text(
+                                    t.ValueDate          // ← new field
+                                    .ToString("dd MMM yyyy")
+                                    .ToUpper()
+                                );
+                                table.Cell().PaddingVertical(3).AlignRight()
+                                    .Text(t.Debit > 0 ? $"{t.Debit:N2}" : "");
+                                table.Cell().PaddingVertical(3).AlignRight()
+                                    .Text(t.Credit > 0 ? $"{t.Credit:N2}" : "");
+                                table.Cell().PaddingVertical(3).AlignRight()
+                                    .Text($"{t.Balance:N2}");
+                            }
+                        });
+
+                        // Summary totals — using new Statement fields
+                        col.Item().PaddingTop(10).Column(summary =>
+                        {
+                            summary.Item()
+                                .Text($"Book Balance: {statement.BookBalance:N2}");
+                            summary.Item()
+                                .Text($"Clear Balance: {statement.ClearBalance:N2}");
+                            summary.Item()
+                                .Text($"Total Debit Value: {statement.TotalDebitValue:N2}");
+                            summary.Item()
+                                .Text($"Total Credit Value: {statement.TotalCreditValue:N2}");
+                            summary.Item()
+                                .Text($"Total Debit Number: {statement.TotalDebitCount}");
+                            summary.Item()
+                                .Text($"Total Credit Number: {statement.TotalCreditCount}");
                         });
                     });
                 });
             });
 
             return document.GeneratePdf();
-        }
-
-        // Calculates how many pages the PDF will have
-        // before actually generating it — used for charge preview
-        public int CalculateNumberOfPages(Statement statement)
-        {
-            // Approximately 30 transactions fit per page
-            const int transactionsPerPage = 30;
-            int pages = (int)Math.Ceiling(
-                (double)statement.Transactions.Count / transactionsPerPage
-            );
-            return Math.Max(1, pages);  // minimum 1 page
         }
     }
 }
