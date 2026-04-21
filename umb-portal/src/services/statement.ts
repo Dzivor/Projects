@@ -1,4 +1,8 @@
 import axios from "axios";
+import {
+  createTrackedAbortController,
+  releaseTrackedAbortController,
+} from "./requestManager";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "https://localhost:7174";
@@ -36,41 +40,64 @@ const getAuthHeader = () => {
 export const previewStatement = async (
   payload: StatementRequest,
 ): Promise<StatementPreviewResponse> => {
-  const response = await axios.post<StatementPreviewResponse>(
-    `${API_BASE_URL}/api/statement/preview`,
-    payload,
-    { headers: getAuthHeader() },
-  );
+  const controller = createTrackedAbortController();
 
-  return response.data;
+  try {
+    const response = await axios.post<StatementPreviewResponse>(
+      `${API_BASE_URL}/api/statement/preview`,
+      payload,
+      {
+        headers: getAuthHeader(),
+        signal: controller.signal,
+      },
+    );
+
+    return response.data;
+  } finally {
+    releaseTrackedAbortController(controller);
+  }
 };
 
 export const generateStatementPdf = async (
   payload: StatementRequest,
 ): Promise<Blob> => {
-  const response = await axios.post(
-    `${API_BASE_URL}/api/statement/generate`,
-    payload,
-    {
-      headers: getAuthHeader(),
-      responseType: "blob",
-    },
-  );
+  const controller = createTrackedAbortController();
 
-  return response.data;
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/api/statement/generate`,
+      payload,
+      {
+        headers: getAuthHeader(),
+        responseType: "blob",
+        signal: controller.signal,
+      },
+    );
+
+    return response.data;
+  } finally {
+    releaseTrackedAbortController(controller);
+  }
 };
 
 export const lookupAccount = async (
   accountNumber: string,
 ): Promise<AccountLookupResponse> => {
-  const response = await axios.get<AccountLookupResponse>(
-    `${API_BASE_URL}/api/account/lookup/${encodeURIComponent(accountNumber)}`,
-    {
-      headers: getAuthHeader(),
-    },
-  );
+  const controller = createTrackedAbortController();
 
-  return response.data;
+  try {
+    const response = await axios.get<AccountLookupResponse>(
+      `${API_BASE_URL}/api/account/lookup/${encodeURIComponent(accountNumber)}`,
+      {
+        headers: getAuthHeader(),
+        signal: controller.signal,
+      },
+    );
+
+    return response.data;
+  } finally {
+    releaseTrackedAbortController(controller);
+  }
 };
 
 export type {
