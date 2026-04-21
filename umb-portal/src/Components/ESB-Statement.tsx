@@ -2,7 +2,7 @@ import { useFormik } from "formik";
 import { AxiosError } from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { CalendarDays, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import {
   generateStatementPdf,
   lookupAccount,
@@ -243,10 +243,6 @@ const ESBStatement = () => {
               onPaste={(e) => e.preventDefault()}
               className="w-full rounded border p-2 pr-10"
             />
-            <CalendarDays
-              size={16}
-              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-amber-500"
-            />
           </div>
 
           <label
@@ -267,10 +263,6 @@ const ESBStatement = () => {
               onKeyDown={blockManualDateTyping}
               onPaste={(e) => e.preventDefault()}
               className="w-full rounded border p-2 pr-10"
-            />
-            <CalendarDays
-              size={16}
-              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-amber-500"
             />
           </div>
 
