@@ -1,16 +1,32 @@
 import { useFormik } from "formik";
 import { AxiosError } from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { LogOut } from "lucide-react";
-import { lookupAccount } from "../services/statement";
+import { lookupAccount, previewStatement } from "../services/statement";
 import { logoutUser } from "../services/session";
+
+type StatementPreviewResponse = {
+  numberOfPages: number;
+  totalCharge: number;
+  accountToCharge: string;
+  chargeMessage: string;
+  accountName: string;
+  accountNumber: string;
+};
 
 const VisaStatement = () => {
   const navigate = useNavigate();
   const [isLookupLoading, setIsLookupLoading] = useState(false);
   const [accountName, setAccountName] = useState("");
   const [lookupError, setLookupError] = useState("");
+  const [previewResults, setPreviewResults] =
+    useState<StatementPreviewResponse | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState("");
+  const chargeAccountInputRef = useRef<HTMLInputElement>(null);
+  const latestLookupRequestIdRef = useRef(0);
+  const lastResolvedAccountNumberRef = useRef("");
 
   const formik = useFormik({
     initialValues: {
@@ -21,10 +37,57 @@ const VisaStatement = () => {
       chargeAltAccount: false,
       waiveCharge: false,
     },
-    onSubmit: () => {
-      // static phase: no auth call yet
+    onSubmit: async (values) => {
+      setIsPreviewLoading(true);
+      setPreviewError("");
+      setPreviewResults(null);
+
+      try {
+        const payload = {
+          accountNumber: values.accountNumber,
+          startDate: values.startDate,
+          endDate: values.endDate,
+          channel: "VISA" as const,
+          waiveCharge: values.waiveCharge,
+          chargeAltAccount: values.chargeAltAccount,
+          altAccountNumber: values.chargeAltAccount
+            ? values.chargeAccNumber
+            : undefined,
+          staffUsername: localStorage.getItem("authUser")
+            ? JSON.parse(localStorage.getItem("authUser") || "{}").username
+            : "SYSTEM",
+        };
+
+        const response = await previewStatement(payload);
+
+        // If waive charge is checked, set total charge to 0
+        const result = {
+          ...response,
+          totalCharge: values.waiveCharge ? 0 : response.totalCharge,
+        };
+
+        setPreviewResults(result);
+      } catch (error) {
+        if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
+          return;
+        }
+
+        if (error instanceof AxiosError) {
+          setPreviewError(
+            error.response?.data?.message ??
+              "Unable to preview statement. Please try again.",
+          );
+        } else {
+          setPreviewError("Unable to preview statement.");
+        }
+      } finally {
+        setIsPreviewLoading(false);
+      }
     },
   });
+
+  const chargeAltAccount = formik.values.chargeAltAccount;
+  const setFieldValue = formik.setFieldValue;
 
   const handlePrimaryAccountNumberChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -33,6 +96,13 @@ const VisaStatement = () => {
       .replace(/\D/g, "")
       .slice(0, 13);
     formik.setFieldValue("accountNumber", normalizedAccountNumber);
+
+    if (
+      !formik.values.chargeAltAccount &&
+      normalizedAccountNumber.length < 13
+    ) {
+      formik.setFieldValue("chargeAccNumber", "");
+    }
   };
 
   const handleChargeAccountNumberChange = (
@@ -44,50 +114,86 @@ const VisaStatement = () => {
     formik.setFieldValue("chargeAccNumber", normalizedAccountNumber);
   };
 
-  const lookupAccountName = async (accountNumber: string) => {
-    const normalizedAccountNumber = accountNumber.trim();
+  const handleChargeAltAccountChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const isAltAccountChecked = e.target.checked;
+    formik.setFieldValue("chargeAltAccount", isAltAccountChecked);
 
-    if (!normalizedAccountNumber) {
-      setAccountName("");
-      setLookupError("");
+    if (isAltAccountChecked) {
+      formik.setFieldValue("chargeAccNumber", "");
+      window.requestAnimationFrame(() => {
+        chargeAccountInputRef.current?.focus();
+      });
       return;
     }
 
-    if (normalizedAccountNumber.length < 13) {
-      setAccountName("");
-      setLookupError("");
-      return;
+    if (formik.values.accountNumber.length === 13 && accountName) {
+      formik.setFieldValue("chargeAccNumber", formik.values.accountNumber);
     }
+  };
 
-    setIsLookupLoading(true);
-    setLookupError("");
+  const lookupAccountName = useCallback(
+    async (accountNumber: string) => {
+      const normalizedAccountNumber = accountNumber.trim();
 
-    try {
-      const account = await lookupAccount(normalizedAccountNumber);
-      setAccountName(account.accountName);
-    } catch (error) {
-      if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
+      if (normalizedAccountNumber.length !== 13) {
         return;
       }
 
-      setAccountName("");
-      if (error instanceof AxiosError) {
-        setLookupError(
-          error.response?.data?.message ??
-            "Unable to resolve account name. Please verify account number.",
-        );
-      } else {
-        setLookupError("Unable to resolve account name.");
+      if (normalizedAccountNumber === lastResolvedAccountNumberRef.current) {
+        return;
       }
-    } finally {
-      setIsLookupLoading(false);
-    }
-  };
 
-  const handleAccountLookup = async (e: React.FocusEvent<HTMLInputElement>) => {
-    formik.handleBlur(e);
-    await lookupAccountName(e.target.value);
-  };
+      const requestId = latestLookupRequestIdRef.current + 1;
+      latestLookupRequestIdRef.current = requestId;
+
+      setIsLookupLoading(true);
+      setLookupError("");
+
+      try {
+        const account = await lookupAccount(normalizedAccountNumber);
+
+        if (requestId !== latestLookupRequestIdRef.current) {
+          return;
+        }
+
+        lastResolvedAccountNumberRef.current = normalizedAccountNumber;
+        setAccountName(account.accountName);
+
+        if (!chargeAltAccount) {
+          setFieldValue("chargeAccNumber", normalizedAccountNumber);
+        }
+      } catch (error) {
+        if (requestId !== latestLookupRequestIdRef.current) {
+          return;
+        }
+
+        if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
+          return;
+        }
+
+        lastResolvedAccountNumberRef.current = "";
+        setAccountName("");
+        if (!chargeAltAccount) {
+          setFieldValue("chargeAccNumber", "");
+        }
+        if (error instanceof AxiosError) {
+          setLookupError(
+            error.response?.data?.message ??
+              "Unable to resolve account name. Please verify account number.",
+          );
+        } else {
+          setLookupError("Unable to resolve account name.");
+        }
+      } finally {
+        if (requestId === latestLookupRequestIdRef.current) {
+          setIsLookupLoading(false);
+        }
+      }
+    },
+    [chargeAltAccount, setFieldValue],
+  );
 
   useEffect(() => {
     const accountNumber = formik.values.accountNumber.trim();
@@ -95,23 +201,36 @@ const VisaStatement = () => {
     if (!accountNumber) {
       setAccountName("");
       setLookupError("");
+      lastResolvedAccountNumberRef.current = "";
+      if (!chargeAltAccount) {
+        setFieldValue("chargeAccNumber", "");
+      }
       return;
     }
 
     if (accountNumber.length < 13) {
       setAccountName("");
       setLookupError("");
+      lastResolvedAccountNumberRef.current = "";
+      if (!chargeAltAccount) {
+        setFieldValue("chargeAccNumber", "");
+      }
       return;
     }
 
     const timeoutId = window.setTimeout(() => {
       void lookupAccountName(accountNumber);
-    }, 450);
+    }, 250);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [formik.values.accountNumber]);
+  }, [
+    formik.values.accountNumber,
+    chargeAltAccount,
+    lookupAccountName,
+    setFieldValue,
+  ]);
 
   const blockManualDateTyping = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key.length === 1 || e.key === "Backspace" || e.key === "Delete") {
@@ -156,13 +275,13 @@ const VisaStatement = () => {
             name="accountNumber"
             value={formik.values.accountNumber}
             onChange={handlePrimaryAccountNumberChange}
-            onBlur={handleAccountLookup}
+            onBlur={formik.handleBlur}
             inputMode="numeric"
             maxLength={13}
             minLength={13}
             pattern="[0-9]{13}"
             required
-            title="Account number must be exactly 13 digits"
+            title="Fill out this field with a valid account number"
             placeholder="Enter Account Number"
             className="w-full rounded border p-2"
           />
@@ -196,20 +315,6 @@ const VisaStatement = () => {
               className="w-full rounded border p-2 pr-10"
             />
           </div>
-          <label
-            htmlFor="chargeAltAccount"
-            className="text-sm font-medium text-slate-700"
-          >
-            Charge Alt Account:
-          </label>
-          <input
-            id="chargeAltAccount"
-            type="checkbox"
-            name="chargeAltAccount"
-            checked={formik.values.chargeAltAccount}
-            onChange={formik.handleChange}
-            className="h-4 w-4 justify-self-start accent-amber-500"
-          />
 
           <label
             htmlFor="endDate"
@@ -232,12 +337,28 @@ const VisaStatement = () => {
           </div>
 
           <label
+            htmlFor="chargeAltAccount"
+            className="text-sm font-medium text-slate-700"
+          >
+            Charge Alt Account:
+          </label>
+          <input
+            id="chargeAltAccount"
+            type="checkbox"
+            name="chargeAltAccount"
+            checked={formik.values.chargeAltAccount}
+            onChange={handleChargeAltAccountChange}
+            className="h-4 w-4 justify-self-start accent-amber-500"
+          />
+
+          <label
             htmlFor="chargeAccNumber"
             className="text-sm font-medium text-slate-700"
           >
             Charge Account Number:
           </label>
           <input
+            ref={chargeAccountInputRef}
             id="chargeAccNumber"
             name="chargeAccNumber"
             value={formik.values.chargeAccNumber}
@@ -246,7 +367,7 @@ const VisaStatement = () => {
             maxLength={13}
             minLength={13}
             pattern="[0-9]{13}"
-            title="Charge account number must be exactly 13 digits"
+            title="Fill out this field with a valid account number"
             placeholder=" "
             className="w-full rounded border p-2"
           />
@@ -268,15 +389,72 @@ const VisaStatement = () => {
           <div />
           <button
             type="submit"
-            className="justify-self-start rounded bg-amber-400 px-4 py-2 text-white"
+            disabled={isPreviewLoading}
+            className="justify-self-start rounded bg-amber-400 px-4 py-2 text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Preview Charges
+            {isPreviewLoading ? "Loading Preview..." : "Preview Charges"}
           </button>
         </form>
       </div>
 
       {lookupError && (
         <p className="mb-4 text-center text-sm text-red-600">{lookupError}</p>
+      )}
+
+      {previewError && (
+        <p className="mb-4 text-center text-sm text-red-600">{previewError}</p>
+      )}
+
+      {previewResults && (
+        <section className="flex flex-col items-center justify-center mt-8">
+          <h2 className="text-2xl font-bold mb-6">Preview Charges</h2>
+          <div className="w-full max-w-2xl bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div>
+                <p className="text-sm text-slate-600">Account Number</p>
+                <p className="text-lg font-semibold text-slate-900">
+                  {previewResults.accountNumber}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-slate-600">Account Name</p>
+                <p className="text-lg font-semibold text-slate-900">
+                  {previewResults.accountName}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-slate-600">Number of Pages</p>
+                <p className="text-lg font-semibold text-slate-900">
+                  {previewResults.numberOfPages}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-slate-600">Total Charge</p>
+                <p
+                  className={`text-lg font-semibold ${formik.values.waiveCharge ? "text-green-600" : "text-slate-900"}`}
+                >
+                  {formik.values.waiveCharge
+                    ? "Free (Waived)"
+                    : `${previewResults.totalCharge}`}
+                </p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-sm text-slate-600">Account to Charge</p>
+                <p className="text-lg font-semibold text-slate-900">
+                  {previewResults.accountToCharge}
+                </p>
+              </div>
+              {previewResults.chargeMessage && (
+                <div className="col-span-2">
+                  <p className="text-sm text-slate-600">Charge Message</p>
+                  <p className="text-sm text-slate-700 mt-1">
+                    {previewResults.chargeMessage}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
       )}
     </main>
   );

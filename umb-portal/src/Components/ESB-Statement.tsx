@@ -1,6 +1,6 @@
 import { useFormik } from "formik";
 import { AxiosError } from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { LogOut } from "lucide-react";
 import {
@@ -16,6 +16,8 @@ const ESBStatement = () => {
   const [isLookupLoading, setIsLookupLoading] = useState(false);
   const [accountName, setAccountName] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const latestLookupRequestIdRef = useRef(0);
+  const lastResolvedAccountNumberRef = useRef("");
 
   const buildRequestPayload = (values: {
     accountNumber: string;
@@ -91,50 +93,60 @@ const ESBStatement = () => {
     formik.setFieldValue("accountNumber", normalizedAccountNumber);
   };
 
-  const lookupAccountName = async (accountNumber: string) => {
-    const normalizedAccountNumber = accountNumber.trim();
+  const lookupAccountName = useCallback(
+    async (accountNumber: string) => {
+      const normalizedAccountNumber = accountNumber.trim();
 
-    if (!normalizedAccountNumber) {
-      setAccountName("");
-      setErrorMessage("");
-      return;
-    }
-
-    if (normalizedAccountNumber.length < 13) {
-      setAccountName("");
-      setErrorMessage("");
-      return;
-    }
-
-    setIsLookupLoading(true);
-    setErrorMessage("");
-
-    try {
-      const account = await lookupAccount(normalizedAccountNumber);
-      setAccountName(account.accountName);
-    } catch (error) {
-      if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
+      if (normalizedAccountNumber.length !== 13) {
         return;
       }
 
-      setAccountName("");
-      if (error instanceof AxiosError) {
-        setErrorMessage(
-          error.response?.data?.message ??
-            "Unable to resolve account name. Please verify account number.",
-        );
-      } else {
-        setErrorMessage("Unable to resolve account name.");
+      if (normalizedAccountNumber === lastResolvedAccountNumberRef.current) {
+        return;
       }
-    } finally {
-      setIsLookupLoading(false);
-    }
-  };
 
-  const handleAccountLookup = async (e: React.FocusEvent<HTMLInputElement>) => {
-    formik.handleBlur(e);
-    await lookupAccountName(e.target.value);
-  };
+      const requestId = latestLookupRequestIdRef.current + 1;
+      latestLookupRequestIdRef.current = requestId;
+
+      setIsLookupLoading(true);
+      setErrorMessage("");
+
+      try {
+        const account = await lookupAccount(normalizedAccountNumber);
+
+        if (requestId !== latestLookupRequestIdRef.current) {
+          return;
+        }
+
+        lastResolvedAccountNumberRef.current = normalizedAccountNumber;
+        setAccountName(account.accountName);
+      } catch (error) {
+        if (requestId !== latestLookupRequestIdRef.current) {
+          return;
+        }
+
+        if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
+          return;
+        }
+
+        lastResolvedAccountNumberRef.current = "";
+        setAccountName("");
+        if (error instanceof AxiosError) {
+          setErrorMessage(
+            error.response?.data?.message ??
+              "Unable to resolve account name. Please verify account number.",
+          );
+        } else {
+          setErrorMessage("Unable to resolve account name.");
+        }
+      } finally {
+        if (requestId === latestLookupRequestIdRef.current) {
+          setIsLookupLoading(false);
+        }
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     const accountNumber = formik.values.accountNumber.trim();
@@ -142,23 +154,25 @@ const ESBStatement = () => {
     if (!accountNumber) {
       setAccountName("");
       setErrorMessage("");
+      lastResolvedAccountNumberRef.current = "";
       return;
     }
 
     if (accountNumber.length < 13) {
       setAccountName("");
       setErrorMessage("");
+      lastResolvedAccountNumberRef.current = "";
       return;
     }
 
     const timeoutId = window.setTimeout(() => {
       void lookupAccountName(accountNumber);
-    }, 450);
+    }, 250);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [formik.values.accountNumber]);
+  }, [formik.values.accountNumber, lookupAccountName]);
 
   const blockManualDateTyping = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key.length === 1 || e.key === "Backspace" || e.key === "Delete") {
@@ -203,7 +217,7 @@ const ESBStatement = () => {
             name="accountNumber"
             value={formik.values.accountNumber}
             onChange={handlePrimaryAccountNumberChange}
-            onBlur={handleAccountLookup}
+            onBlur={formik.handleBlur}
             inputMode="numeric"
             maxLength={13}
             minLength={13}
