@@ -1,4 +1,8 @@
 import axios from "axios";
+import {
+  createTrackedAbortController,
+  releaseTrackedAbortController,
+} from "./requestManager";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "https://localhost:7174";
@@ -16,10 +20,19 @@ export type LoginResponse = {
 };
 
 export const login = async (payload: LoginRequest): Promise<LoginResponse> => {
-  const response = await axios.post<LoginResponse>(
-    `${API_BASE_URL}/api/auth/login`,
-    payload,
-  );
+  const controller = createTrackedAbortController();
 
-  return response.data;
+  try {
+    const response = await axios.post<LoginResponse>(
+      `${API_BASE_URL}/api/auth/login`,
+      payload,
+      {
+        signal: controller.signal,
+      },
+    );
+
+    return response.data;
+  } finally {
+    releaseTrackedAbortController(controller);
+  }
 };

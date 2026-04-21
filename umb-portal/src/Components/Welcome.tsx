@@ -1,5 +1,6 @@
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router";
+import { logoutUser } from "../services/session";
 
 function Welcome() {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ function Welcome() {
       <div className="mb-6 flex justify-end">
         <button
           type="button"
+          onClick={() => logoutUser(navigate)}
           className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
         >
           <LogOut size={14} />

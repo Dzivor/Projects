@@ -1,10 +1,13 @@
 import { useFormik } from "formik";
 import { AxiosError } from "axios";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { CalendarDays, LogOut } from "lucide-react";
 import { lookupAccount } from "../services/statement";
+import { logoutUser } from "../services/session";
 
 const VisaStatement = () => {
+  const navigate = useNavigate();
   const [isLookupLoading, setIsLookupLoading] = useState(false);
   const [accountName, setAccountName] = useState("");
   const [lookupError, setLookupError] = useState("");
@@ -23,10 +26,34 @@ const VisaStatement = () => {
     },
   });
 
+  const handlePrimaryAccountNumberChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const normalizedAccountNumber = e.target.value
+      .replace(/\D/g, "")
+      .slice(0, 13);
+    formik.setFieldValue("accountNumber", normalizedAccountNumber);
+  };
+
+  const handleChargeAccountNumberChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const normalizedAccountNumber = e.target.value
+      .replace(/\D/g, "")
+      .slice(0, 13);
+    formik.setFieldValue("chargeAccNumber", normalizedAccountNumber);
+  };
+
   const lookupAccountName = async (accountNumber: string) => {
     const normalizedAccountNumber = accountNumber.trim();
 
     if (!normalizedAccountNumber) {
+      setAccountName("");
+      setLookupError("");
+      return;
+    }
+
+    if (normalizedAccountNumber.length < 13) {
       setAccountName("");
       setLookupError("");
       return;
@@ -39,6 +66,10 @@ const VisaStatement = () => {
       const account = await lookupAccount(normalizedAccountNumber);
       setAccountName(account.accountName);
     } catch (error) {
+      if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
+        return;
+      }
+
       setAccountName("");
       if (error instanceof AxiosError) {
         setLookupError(
@@ -67,6 +98,12 @@ const VisaStatement = () => {
       return;
     }
 
+    if (accountNumber.length < 13) {
+      setAccountName("");
+      setLookupError("");
+      return;
+    }
+
     const timeoutId = window.setTimeout(() => {
       void lookupAccountName(accountNumber);
     }, 450);
@@ -87,6 +124,7 @@ const VisaStatement = () => {
       <div className="flex justify-end px-6 pt-6">
         <button
           type="button"
+          onClick={() => logoutUser(navigate)}
           className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
         >
           <LogOut size={16} />
@@ -117,8 +155,14 @@ const VisaStatement = () => {
             id="accountNumber"
             name="accountNumber"
             value={formik.values.accountNumber}
-            onChange={formik.handleChange}
+            onChange={handlePrimaryAccountNumberChange}
             onBlur={handleAccountLookup}
+            inputMode="numeric"
+            maxLength={13}
+            minLength={13}
+            pattern="[0-9]{13}"
+            required
+            title="Account number must be exactly 13 digits"
             placeholder="Enter Account Number"
             className="w-full rounded border p-2"
           />
@@ -205,7 +249,12 @@ const VisaStatement = () => {
             id="chargeAccNumber"
             name="chargeAccNumber"
             value={formik.values.chargeAccNumber}
-            onChange={formik.handleChange}
+            onChange={handleChargeAccountNumberChange}
+            inputMode="numeric"
+            maxLength={13}
+            minLength={13}
+            pattern="[0-9]{13}"
+            title="Charge account number must be exactly 13 digits"
             placeholder=" "
             className="w-full rounded border p-2"
           />
