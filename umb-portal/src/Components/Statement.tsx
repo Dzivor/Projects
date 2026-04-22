@@ -3,8 +3,14 @@ import { AxiosError } from "axios";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { LogOut } from "lucide-react";
-import { lookupAccount, previewStatement } from "../services/statement";
+import {
+  generateStatementPdf,
+  lookupAccount,
+  previewStatement,
+  type StatementRequest,
+} from "../services/statement";
 import { logoutUser } from "../services/session";
+import PreviewChargesModal from "./PreviewChargesModal";
 
 type StatementPreviewResponse = {
   numberOfPages: number;
@@ -23,10 +29,70 @@ const VisaStatement = () => {
   const [previewResults, setPreviewResults] =
     useState<StatementPreviewResponse | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [isPrintLoading, setIsPrintLoading] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [previewError, setPreviewError] = useState("");
   const chargeAccountInputRef = useRef<HTMLInputElement>(null);
   const latestLookupRequestIdRef = useRef(0);
   const lastResolvedAccountNumberRef = useRef("");
+
+  const buildRequestPayload = (values: {
+    accountNumber: string;
+    startDate: string;
+    endDate: string;
+    chargeAccNumber: string;
+    chargeAltAccount: boolean;
+    waiveCharge: boolean;
+  }): StatementRequest => {
+    const authUserRaw = localStorage.getItem("authUser");
+    const authUser = authUserRaw ? JSON.parse(authUserRaw) : null;
+
+    return {
+      accountNumber: values.accountNumber,
+      startDate: values.startDate,
+      endDate: values.endDate,
+      channel: "VISA",
+      waiveCharge: values.waiveCharge,
+      chargeAltAccount: values.chargeAltAccount,
+      altAccountNumber: values.chargeAltAccount
+        ? values.chargeAccNumber
+        : undefined,
+      staffUsername: authUser?.username ?? "SYSTEM",
+    };
+  };
+
+  const handlePrint = async () => {
+    setPreviewError("");
+    setIsPrintLoading(true);
+
+    try {
+      const payload = buildRequestPayload(formik.values);
+      const pdfBlob = await generateStatementPdf(payload);
+
+      const downloadUrl = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `VISA_Statement_${payload.accountNumber}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(downloadUrl);
+
+      setIsPreviewModalOpen(false);
+    } catch (error) {
+      if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
+        return;
+      }
+
+      if (error instanceof AxiosError) {
+        setPreviewError(
+          error.response?.data?.message ?? "Print failed. Please try again.",
+        );
+      } else {
+        setPreviewError("Print failed. Please try again.");
+      }
+    } finally {
+      setIsPrintLoading(false);
+    }
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -41,22 +107,10 @@ const VisaStatement = () => {
       setIsPreviewLoading(true);
       setPreviewError("");
       setPreviewResults(null);
+      setIsPreviewModalOpen(false);
 
       try {
-        const payload = {
-          accountNumber: values.accountNumber,
-          startDate: values.startDate,
-          endDate: values.endDate,
-          channel: "VISA" as const,
-          waiveCharge: values.waiveCharge,
-          chargeAltAccount: values.chargeAltAccount,
-          altAccountNumber: values.chargeAltAccount
-            ? values.chargeAccNumber
-            : undefined,
-          staffUsername: localStorage.getItem("authUser")
-            ? JSON.parse(localStorage.getItem("authUser") || "{}").username
-            : "SYSTEM",
-        };
+        const payload = buildRequestPayload(values);
 
         const response = await previewStatement(payload);
 
@@ -67,6 +121,7 @@ const VisaStatement = () => {
         };
 
         setPreviewResults(result);
+        setIsPreviewModalOpen(true);
       } catch (error) {
         if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
           return;
@@ -404,6 +459,16 @@ const VisaStatement = () => {
       {previewError && (
         <p className="mb-4 text-center text-sm text-red-600">{previewError}</p>
       )}
+
+      <PreviewChargesModal
+        isOpen={isPreviewModalOpen}
+        message={previewResults?.chargeMessage ?? "Preview generated."}
+        isPrinting={isPrintLoading}
+        onPrint={() => {
+          void handlePrint();
+        }}
+        onCancel={() => setIsPreviewModalOpen(false)}
+      />
 
       {previewResults && (
         <section className="flex flex-col items-center justify-center mt-8">
