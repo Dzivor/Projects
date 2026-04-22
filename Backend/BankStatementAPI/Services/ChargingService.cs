@@ -45,7 +45,7 @@ namespace BankStatementAPI.Services
                     AccountCharged = string.Empty,
                     Status = ChargeStatus.Waived,
                     NumberOfPages = numberOfPages,
-                    Message = "Charge has been waived"
+                    Message = $"Charge has been waived."
                 };
             }
 

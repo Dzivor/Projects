@@ -10,6 +10,7 @@ namespace BankStatementAPI.DTOs
         public bool WaiveCharge { get; set; }           // waive charge checkbox
         public bool ChargeAltAccount { get; set; }      // alt account checkbox
         public string? AltAccountNumber { get; set; }   // optional alt account
+        public string? PreviewToken { get; set; }       // token from preview flow
 
         public string StaffUsername {get; set; } = "";    // for audit logging
     }

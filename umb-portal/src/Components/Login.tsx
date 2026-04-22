@@ -77,7 +77,7 @@ function Login() {
           <label className="flex h-12 items-center gap-4 rounded-full border border-[#bcc2c7] bg-[#ececec] px-6">
             <User size={15} className="text-[#697786]" />
             <input
-              type="email"
+              type="text"
               name="username"
               required
               placeholder="Username"

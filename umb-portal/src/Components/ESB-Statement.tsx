@@ -6,15 +6,22 @@ import { LogOut } from "lucide-react";
 import {
   generateStatementPdf,
   lookupAccount,
+  previewStatement,
+  type StatementPreviewResponse,
   type StatementRequest,
 } from "../services/statement";
 import { logoutUser } from "../services/session";
+import PreviewChargesModal from "./PreviewChargesModal";
 
 const ESBStatement = () => {
   const navigate = useNavigate();
   const [isPrintLoading, setIsPrintLoading] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isLookupLoading, setIsLookupLoading] = useState(false);
   const [accountName, setAccountName] = useState("");
+  const [previewResults, setPreviewResults] =
+    useState<StatementPreviewResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const latestLookupRequestIdRef = useRef(0);
   const lastResolvedAccountNumberRef = useRef("");
@@ -47,7 +54,10 @@ const ESBStatement = () => {
     setIsPrintLoading(true);
 
     try {
-      const payload = buildRequestPayload(values);
+      const payload = {
+        ...buildRequestPayload(values),
+        previewToken: previewResults?.previewToken,
+      };
       const pdfBlob = await generateStatementPdf(payload);
 
       const downloadUrl = window.URL.createObjectURL(pdfBlob);
@@ -56,6 +66,8 @@ const ESBStatement = () => {
       link.download = `ESB_Statement_${payload.accountNumber}.pdf`;
       link.click();
       window.URL.revokeObjectURL(downloadUrl);
+
+      setIsPreviewModalOpen(false);
     } catch (error) {
       if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
         return;
@@ -80,7 +92,32 @@ const ESBStatement = () => {
       endDate: "",
     },
     onSubmit: async (values) => {
-      await handlePrint(values);
+      setErrorMessage("");
+      setPreviewResults(null);
+      setIsPreviewModalOpen(false);
+      setIsPreviewLoading(true);
+
+      try {
+        const payload = buildRequestPayload(values);
+        const response = await previewStatement(payload);
+        setPreviewResults(response);
+        setIsPreviewModalOpen(true);
+      } catch (error) {
+        if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
+          return;
+        }
+
+        if (error instanceof AxiosError) {
+          setErrorMessage(
+            error.response?.data?.message ??
+              "Unable to preview statement. Please try again.",
+          );
+        } else {
+          setErrorMessage("Unable to preview statement.");
+        }
+      } finally {
+        setIsPreviewLoading(false);
+      }
     },
   });
 
@@ -93,60 +130,57 @@ const ESBStatement = () => {
     formik.setFieldValue("accountNumber", normalizedAccountNumber);
   };
 
-  const lookupAccountName = useCallback(
-    async (accountNumber: string) => {
-      const normalizedAccountNumber = accountNumber.trim();
+  const lookupAccountName = useCallback(async (accountNumber: string) => {
+    const normalizedAccountNumber = accountNumber.trim();
 
-      if (normalizedAccountNumber.length !== 13) {
+    if (normalizedAccountNumber.length !== 13) {
+      return;
+    }
+
+    if (normalizedAccountNumber === lastResolvedAccountNumberRef.current) {
+      return;
+    }
+
+    const requestId = latestLookupRequestIdRef.current + 1;
+    latestLookupRequestIdRef.current = requestId;
+
+    setIsLookupLoading(true);
+    setErrorMessage("");
+
+    try {
+      const account = await lookupAccount(normalizedAccountNumber);
+
+      if (requestId !== latestLookupRequestIdRef.current) {
         return;
       }
 
-      if (normalizedAccountNumber === lastResolvedAccountNumberRef.current) {
+      lastResolvedAccountNumberRef.current = normalizedAccountNumber;
+      setAccountName(account.accountName);
+    } catch (error) {
+      if (requestId !== latestLookupRequestIdRef.current) {
         return;
       }
 
-      const requestId = latestLookupRequestIdRef.current + 1;
-      latestLookupRequestIdRef.current = requestId;
-
-      setIsLookupLoading(true);
-      setErrorMessage("");
-
-      try {
-        const account = await lookupAccount(normalizedAccountNumber);
-
-        if (requestId !== latestLookupRequestIdRef.current) {
-          return;
-        }
-
-        lastResolvedAccountNumberRef.current = normalizedAccountNumber;
-        setAccountName(account.accountName);
-      } catch (error) {
-        if (requestId !== latestLookupRequestIdRef.current) {
-          return;
-        }
-
-        if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
-          return;
-        }
-
-        lastResolvedAccountNumberRef.current = "";
-        setAccountName("");
-        if (error instanceof AxiosError) {
-          setErrorMessage(
-            error.response?.data?.message ??
-              "Unable to resolve account name. Please verify account number.",
-          );
-        } else {
-          setErrorMessage("Unable to resolve account name.");
-        }
-      } finally {
-        if (requestId === latestLookupRequestIdRef.current) {
-          setIsLookupLoading(false);
-        }
+      if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
+        return;
       }
-    },
-    [],
-  );
+
+      lastResolvedAccountNumberRef.current = "";
+      setAccountName("");
+      if (error instanceof AxiosError) {
+        setErrorMessage(
+          error.response?.data?.message ??
+            "Unable to resolve account name. Please try again later.",
+        );
+      } else {
+        setErrorMessage("Unable to resolve account name.");
+      }
+    } finally {
+      if (requestId === latestLookupRequestIdRef.current) {
+        setIsLookupLoading(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const accountNumber = formik.values.accountNumber.trim();
@@ -248,11 +282,11 @@ const ESBStatement = () => {
             <input
               id="startDate"
               type="date"
+              required
               name="startDate"
               value={formik.values.startDate}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              required
               onKeyDown={blockManualDateTyping}
               onPaste={(e) => e.preventDefault()}
               className="w-full rounded border p-2 pr-10"
@@ -283,10 +317,10 @@ const ESBStatement = () => {
           <div className="col-span-2 flex justify-center">
             <button
               type="submit"
-              disabled={isPrintLoading}
+              disabled={isPreviewLoading}
               className="rounded bg-amber-400 px-4 py-2 text-white"
             >
-              {isPrintLoading ? "Printing..." : "Print"}
+              {isPreviewLoading ? "Loading Preview..." : "Print"}
             </button>
           </div>
         </form>
@@ -295,6 +329,27 @@ const ESBStatement = () => {
       {errorMessage && (
         <p className="mb-4 text-center text-sm text-red-600">{errorMessage}</p>
       )}
+
+      <PreviewChargesModal
+        isOpen={isPreviewModalOpen}
+        title="Preview Charges"
+        message={
+          previewResults?.chargeMessage ??
+          "No charge applicable for ESB channel"
+        }
+        accountNumber={
+          previewResults?.accountNumber ?? formik.values.accountNumber
+        }
+        accountName={previewResults?.accountName ?? accountName}
+        numberOfPages={previewResults?.numberOfPages ?? 0}
+        totalChargeText="0"
+        accountToCharge={previewResults?.accountToCharge}
+        isPrinting={isPrintLoading}
+        onPrint={() => {
+          void handlePrint(formik.values);
+        }}
+        onCancel={() => setIsPreviewModalOpen(false)}
+      />
     </main>
   );
 };

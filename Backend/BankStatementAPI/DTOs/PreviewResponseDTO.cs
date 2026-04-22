@@ -2,6 +2,7 @@ namespace BankStatementAPI.DTOs
 {
     public class PreviewResponseDTO
     {
+        public string PreviewToken { get; set; } = "";
         public int NumberOfPages { get; set; }
         public decimal TotalCharge { get; set; }
         public string? AccountToCharge { get; set; }

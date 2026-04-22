@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "qjXRqXm73Uo=",
+  "dgSpecHash": "hTJCcUfJaKQ=",
   "success": true,
   "projectFilePath": "C:\\Projects\\Backend\\BankStatementAPI\\BankStatementAPI.csproj",
   "expectedPackageFiles": [
@@ -29,6 +29,7 @@
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\microsoft.entityframeworkcore.tools\\10.0.6\\microsoft.entityframeworkcore.tools.10.0.6.nupkg.sha512",
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\microsoft.extensions.apidescription.server\\10.0.0\\microsoft.extensions.apidescription.server.10.0.0.nupkg.sha512",
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\microsoft.extensions.dependencymodel\\10.0.6\\microsoft.extensions.dependencymodel.10.0.6.nupkg.sha512",
+    "C:\\Users\\daniel.dzivor\\.nuget\\packages\\microsoft.extensions.http.polly\\10.0.7\\microsoft.extensions.http.polly.10.0.7.nupkg.sha512",
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\microsoft.identity.client\\4.73.1\\microsoft.identity.client.4.73.1.nupkg.sha512",
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\microsoft.identity.client.extensions.msal\\4.73.1\\microsoft.identity.client.extensions.msal.4.73.1.nupkg.sha512",
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\microsoft.identitymodel.abstractions\\8.0.1\\microsoft.identitymodel.abstractions.8.0.1.nupkg.sha512",
@@ -42,6 +43,8 @@
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\microsoft.visualstudio.solutionpersistence\\1.0.52\\microsoft.visualstudio.solutionpersistence.1.0.52.nupkg.sha512",
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\mono.texttemplating\\3.0.0\\mono.texttemplating.3.0.0.nupkg.sha512",
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
+    "C:\\Users\\daniel.dzivor\\.nuget\\packages\\polly\\7.2.4\\polly.7.2.4.nupkg.sha512",
+    "C:\\Users\\daniel.dzivor\\.nuget\\packages\\polly.extensions.http\\3.0.0\\polly.extensions.http.3.0.0.nupkg.sha512",
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\questpdf\\2026.2.4\\questpdf.2026.2.4.nupkg.sha512",
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\swashbuckle.aspnetcore\\10.1.7\\swashbuckle.aspnetcore.10.1.7.nupkg.sha512",
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\10.1.7\\swashbuckle.aspnetcore.swagger.10.1.7.nupkg.sha512",
@@ -62,7 +65,12 @@
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.identitymodel.tokens.jwt\\8.0.1\\system.identitymodel.tokens.jwt.8.0.1.nupkg.sha512",
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.memory.data\\8.0.1\\system.memory.data.8.0.1.nupkg.sha512",
     "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.security.cryptography.pkcs\\9.0.4\\system.security.cryptography.pkcs.9.0.4.nupkg.sha512",
-    "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.security.cryptography.protecteddata\\10.0.6\\system.security.cryptography.protecteddata.10.0.6.nupkg.sha512"
+    "C:\\Users\\daniel.dzivor\\.nuget\\packages\\system.security.cryptography.protecteddata\\10.0.6\\system.security.cryptography.protecteddata.10.0.6.nupkg.sha512",
+    "C:\\Users\\daniel.dzivor\\.nuget\\packages\\uglytoad.pdfpig\\1.7.0-custom-5\\uglytoad.pdfpig.1.7.0-custom-5.nupkg.sha512",
+    "C:\\Users\\daniel.dzivor\\.nuget\\packages\\uglytoad.pdfpig.core\\1.7.0-custom-5\\uglytoad.pdfpig.core.1.7.0-custom-5.nupkg.sha512",
+    "C:\\Users\\daniel.dzivor\\.nuget\\packages\\uglytoad.pdfpig.fonts\\1.7.0-custom-5\\uglytoad.pdfpig.fonts.1.7.0-custom-5.nupkg.sha512",
+    "C:\\Users\\daniel.dzivor\\.nuget\\packages\\uglytoad.pdfpig.tokenization\\1.7.0-custom-5\\uglytoad.pdfpig.tokenization.1.7.0-custom-5.nupkg.sha512",
+    "C:\\Users\\daniel.dzivor\\.nuget\\packages\\uglytoad.pdfpig.tokens\\1.7.0-custom-5\\uglytoad.pdfpig.tokens.1.7.0-custom-5.nupkg.sha512"
   ],
   "logs": []
 }

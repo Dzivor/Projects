@@ -2,6 +2,7 @@ using BankStatementAPI.Models;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using UglyToad.PdfPig;
 
 namespace BankStatementAPI.Services
 {
@@ -82,15 +83,13 @@ namespace BankStatementAPI.Services
                     });
 
                     // ── FOOTER ──
-                    page.Footer().Column(col =>
+                    page.Footer().AlignCenter().Text(x =>
                     {
-                        col.Item().Text(chargingResult.Message)
-                            .FontColor(
-                                chargingResult.Status == ChargeStatus.Failed
-                                    ? "#FF0000" : "#333333"
-                            );
+                        x.Span("Page ");
+                        x.CurrentPageNumber();
+                        x.Span(" of ");
+                        x.TotalPages();
                     });
-
                     // ── CONTENT ──
                     page.Content().Column(col =>
                     {
@@ -176,6 +175,14 @@ namespace BankStatementAPI.Services
             });
 
             return document.GeneratePdf();
+        }
+
+        // Counts pages from the rendered PDF bytes to match actual layout pagination.
+        public int CountPages(byte[] pdfBytes)
+        {
+            using var stream = new MemoryStream(pdfBytes);
+            using var document = UglyToad.PdfPig.PdfDocument.Open(stream);
+            return document.NumberOfPages;
         }
     }
 }
