@@ -13,6 +13,7 @@ import { logoutUser } from "../services/session";
 import PreviewChargesModal from "./PreviewChargesModal";
 
 type StatementPreviewResponse = {
+  previewToken?: string;
   numberOfPages: number;
   totalCharge: number;
   accountToCharge: string;
@@ -66,7 +67,10 @@ const VisaStatement = () => {
     setIsPrintLoading(true);
 
     try {
-      const payload = buildRequestPayload(formik.values);
+      const payload = {
+        ...buildRequestPayload(formik.values),
+        previewToken: previewResults?.previewToken,
+      };
       const pdfBlob = await generateStatementPdf(payload);
 
       const downloadUrl = window.URL.createObjectURL(pdfBlob);
@@ -462,65 +466,23 @@ const VisaStatement = () => {
 
       <PreviewChargesModal
         isOpen={isPreviewModalOpen}
+        title="Preview Charges"
         message={previewResults?.chargeMessage ?? "Preview generated."}
+        accountNumber={previewResults?.accountNumber ?? ""}
+        accountName={previewResults?.accountName ?? ""}
+        numberOfPages={previewResults?.numberOfPages ?? 0}
+        totalChargeText={
+          formik.values.waiveCharge
+            ? "Free (Waived)"
+            : `${previewResults?.totalCharge ?? 0}`
+        }
+        accountToCharge={previewResults?.accountToCharge}
         isPrinting={isPrintLoading}
         onPrint={() => {
           void handlePrint();
         }}
         onCancel={() => setIsPreviewModalOpen(false)}
       />
-
-      {previewResults && (
-        <section className="flex flex-col items-center justify-center mt-8">
-          <h2 className="text-2xl font-bold mb-6">Preview Charges</h2>
-          <div className="w-full max-w-2xl bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <p className="text-sm text-slate-600">Account Number</p>
-                <p className="text-lg font-semibold text-slate-900">
-                  {previewResults.accountNumber}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-600">Account Name</p>
-                <p className="text-lg font-semibold text-slate-900">
-                  {previewResults.accountName}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-600">Number of Pages</p>
-                <p className="text-lg font-semibold text-slate-900">
-                  {previewResults.numberOfPages}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-600">Total Charge</p>
-                <p
-                  className={`text-lg font-semibold ${formik.values.waiveCharge ? "text-green-600" : "text-slate-900"}`}
-                >
-                  {formik.values.waiveCharge
-                    ? "Free (Waived)"
-                    : `${previewResults.totalCharge}`}
-                </p>
-              </div>
-              <div className="col-span-2">
-                <p className="text-sm text-slate-600">Account to Charge</p>
-                <p className="text-lg font-semibold text-slate-900">
-                  {previewResults.accountToCharge}
-                </p>
-              </div>
-              {previewResults.chargeMessage && (
-                <div className="col-span-2">
-                  <p className="text-sm text-slate-600">Charge Message</p>
-                  <p className="text-sm text-slate-700 mt-1">
-                    {previewResults.chargeMessage}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
     </main>
   );
 };

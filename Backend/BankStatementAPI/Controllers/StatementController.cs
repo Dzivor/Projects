@@ -4,6 +4,7 @@ using BankStatementAPI.Services;
 using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace BankStatementAPI.Controllers
 {
@@ -15,17 +16,22 @@ namespace BankStatementAPI.Controllers
         private readonly ChargingService _chargingService;
         private readonly PdfService _pdfService;
         private readonly AuditService _auditService;
+        private readonly IMemoryCache _memoryCache;
+
+        private const string PreviewCachePrefix = "statement-preview:";
 
         public StatementController(
             BankApiService bankApiService,
             ChargingService chargingService,
             PdfService pdfService,
-            AuditService auditService)
+            AuditService auditService,
+            IMemoryCache memoryCache)
         {
             _bankApiService = bankApiService;
             _chargingService = chargingService;
             _pdfService = pdfService;
             _auditService = auditService;
+            _memoryCache = memoryCache;
         }
 
         // POST /api/statement/preview
@@ -60,17 +66,54 @@ namespace BankStatementAPI.Controllers
             }
 
             var statement = statementResult.Statement!;
+            statement.Channel = request.Channel;
+            statement.StartDate = startDate;
+            statement.EndDate = endDate;
 
-            // Step 4 — Calculate number of pages
-            int numberOfPages = _pdfService.CalculateNumberOfPages(statement);
+            // Step 4 — Build a rendered preview and derive pages from actual PDF layout.
+            int numberOfPages = 1;
+            ChargingResult chargePreview = _chargingService.PreviewCharge(request, numberOfPages);
+            byte[] previewPdf = Array.Empty<byte>();
 
-            // Step 5 — Calculate charge (no debit yet)
-            var chargePreview = _chargingService.PreviewCharge(
-                request, numberOfPages
+            for (int attempt = 0; attempt < 3; attempt++)
+            {
+                chargePreview = _chargingService.PreviewCharge(request, numberOfPages);
+                previewPdf = _pdfService.GenerateStatement(statement, chargePreview);
+
+                int renderedPages = _pdfService.CountPages(previewPdf);
+                if (renderedPages == numberOfPages)
+                {
+                    break;
+                }
+
+                numberOfPages = renderedPages;
+            }
+
+            // Finalize preview details from a stable rendered page count.
+            chargePreview = _chargingService.PreviewCharge(request, numberOfPages);
+            previewPdf = _pdfService.GenerateStatement(statement, chargePreview);
+            numberOfPages = _pdfService.CountPages(previewPdf);
+
+            string previewToken = Guid.NewGuid().ToString("N");
+            string requestSignature = BuildPreviewSignature(request, startDate, endDate);
+
+            _memoryCache.Set(
+                BuildPreviewCacheKey(previewToken),
+                new PreviewCacheEntry
+                {
+                    PdfBytes = previewPdf,
+                    NumberOfPages = numberOfPages,
+                    RequestSignature = requestSignature
+                },
+                new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+                }
             );
 
             return Ok(new PreviewResponseDTO
             {
+                PreviewToken = previewToken,
                 NumberOfPages = numberOfPages,
                 TotalCharge = chargePreview.TotalCharge,
                 AccountToCharge = chargePreview.AccountCharged,
@@ -120,9 +163,44 @@ namespace BankStatementAPI.Controllers
             }
 
             var statement = statementResult.Statement!;
+            statement.Channel = request.Channel;
+            statement.StartDate = startDate;
+            statement.EndDate = endDate;
 
-            // Step 4 — Calculate pages
-            int numberOfPages = _pdfService.CalculateNumberOfPages(statement);
+            string previewToken = request.PreviewToken?.Trim() ?? string.Empty;
+            byte[]? cachedPreviewPdf = null;
+            int numberOfPages;
+
+            if (!string.IsNullOrEmpty(previewToken))
+            {
+                string cacheKey = BuildPreviewCacheKey(previewToken);
+
+                if (!_memoryCache.TryGetValue(cacheKey, out PreviewCacheEntry? cachedPreview) ||
+                    cachedPreview == null)
+                {
+                    return BadRequest(new
+                    {
+                        message = "Preview has expired. Please preview again before printing."
+                    });
+                }
+
+                string incomingSignature = BuildPreviewSignature(request, startDate, endDate);
+                if (!string.Equals(incomingSignature, cachedPreview.RequestSignature, StringComparison.Ordinal))
+                {
+                    return BadRequest(new
+                    {
+                        message = "Statement details changed after preview. Please preview again before printing."
+                    });
+                }
+
+                numberOfPages = cachedPreview.NumberOfPages;
+                cachedPreviewPdf = cachedPreview.PdfBytes;
+            }
+            else
+            {
+                // Fallback path for clients that do not send preview token.
+                numberOfPages = _pdfService.CalculateNumberOfPages(statement);
+            }
 
             // Step 5 — Process charge (actually debits account)
             var chargingResult = await _chargingService.ProcessCharge(
@@ -134,10 +212,7 @@ namespace BankStatementAPI.Controllers
                 return BadRequest(new { message = chargingResult.Message });
 
             // Step 7 — Generate PDF
-            statement.Channel = request.Channel;
-            statement.StartDate = startDate;
-            statement.EndDate = endDate;
-            byte[] pdf = _pdfService.GenerateStatement(statement, chargingResult);
+            byte[] pdf = cachedPreviewPdf ?? _pdfService.GenerateStatement(statement, chargingResult);
 
             string staffUsername = User.Identity?.Name ?? request.StaffUsername;
             string staffFullName =
@@ -164,9 +239,41 @@ namespace BankStatementAPI.Controllers
                 // Keep statement generation successful even if audit insert fails.
             }
 
+            if (!string.IsNullOrEmpty(previewToken))
+            {
+                _memoryCache.Remove(BuildPreviewCacheKey(previewToken));
+            }
+
             // Step 8 — Return PDF as downloadable file
             return File(pdf, "application/pdf",
                 $"Statement_{request.AccountNumber}_{DateTime.Now:yyyyMMdd}.pdf");
+        }
+
+        private static string BuildPreviewCacheKey(string previewToken) =>
+            $"{PreviewCachePrefix}{previewToken}";
+
+        private static string BuildPreviewSignature(
+            StatementRequestDTO request,
+            DateTime startDate,
+            DateTime endDate)
+        {
+            string alt = request.AltAccountNumber?.Trim() ?? string.Empty;
+            return string.Join("|",
+                request.AccountNumber.Trim(),
+                startDate.ToString("yyyy-MM-dd"),
+                endDate.ToString("yyyy-MM-dd"),
+                request.Channel.Trim().ToUpperInvariant(),
+                request.WaiveCharge,
+                request.ChargeAltAccount,
+                alt
+            );
+        }
+
+        private sealed class PreviewCacheEntry
+        {
+            public byte[] PdfBytes { get; init; } = Array.Empty<byte>();
+            public int NumberOfPages { get; init; }
+            public string RequestSignature { get; init; } = string.Empty;
         }
 
         // Validates the incoming request

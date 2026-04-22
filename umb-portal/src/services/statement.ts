@@ -15,10 +15,12 @@ type StatementRequest = {
   waiveCharge: boolean;
   chargeAltAccount: boolean;
   altAccountNumber?: string;
+  previewToken?: string;
   staffUsername: string;
 };
 
 type StatementPreviewResponse = {
+  previewToken: string;
   numberOfPages: number;
   totalCharge: number;
   accountToCharge: string;

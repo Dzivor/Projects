@@ -16,6 +16,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddHttpClient();//calling existing APIs
+builder.Services.AddMemoryCache();
 
 //Database context
 builder.Services.AddDbContext<AppDbContext>(options =>

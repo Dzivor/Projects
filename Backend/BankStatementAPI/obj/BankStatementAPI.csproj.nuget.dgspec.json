@@ -72,6 +72,10 @@
               "target": "Package",
               "version": "[10.0.6, )"
             },
+            "Microsoft.Extensions.Http.Polly": {
+              "target": "Package",
+              "version": "[10.0.7, )"
+            },
             "QuestPDF": {
               "target": "Package",
               "version": "[2026.2.4, )"
@@ -83,6 +87,10 @@
             "System.DirectoryServices.AccountManagement": {
               "target": "Package",
               "version": "[10.0.6, )"
+            },
+            "UglyToad.PdfPig": {
+              "target": "Package",
+              "version": "[1.7.0-custom-5, )"
             }
           },
           "imports": [
