@@ -178,16 +178,36 @@ namespace BankStatementAPI.Services
                     .Count(t => !string.IsNullOrEmpty(t.DebitAmount) && t.DebitAmount != "0"),
                 TotalCreditCount = apiResponse.Body
                     .Count(t => !string.IsNullOrEmpty(t.CreditAmount) && t.CreditAmount != "0"),
-                Transactions = apiResponse.Body.Select(t => new Transaction
+                Transactions = apiResponse.Body.Select(t =>
                 {
-                    BookingDate = DateTime.TryParse(t.BookingDate, out var bd) ? bd : DateTime.MinValue,
-                    Narrative = string.Join(" ", t.Descriptions.Select(d => d.Description)),
-                    ValueDate = DateTime.TryParse(t.ValueDate, out var vd) ? vd : DateTime.MinValue,
-                    Debit = decimal.TryParse(t.DebitAmount, out var da) ? da : 0,
-                    Credit = decimal.TryParse(t.CreditAmount, out var ca) ? ca : 0,
-                    Balance = decimal.TryParse(t.ClosingBalance, out var clb) ? clb : 0
+                    var transactionType = string.IsNullOrWhiteSpace(t.TransactionType) ? "-" : t.TransactionType;
+                    var description = string.Concat(t.Descriptions
+                        .Select(d => NormalizeDescriptionForNarrative(d.Description))
+                        .Where(d => !string.IsNullOrWhiteSpace(d)))
+                        .Trim();
+
+                    return new Transaction
+                    {
+                        BookingDate = DateTime.TryParse(t.BookingDate, out var bd) ? bd : DateTime.MinValue,
+                        Narrative = $"{transactionType}: {(string.IsNullOrWhiteSpace(description) ? "-" : description)}",
+                        ValueDate = DateTime.TryParse(t.ValueDate, out var vd) ? vd : DateTime.MinValue,
+                        Debit = decimal.TryParse(t.DebitAmount, out var da) ? da : 0,
+                        Credit = decimal.TryParse(t.CreditAmount, out var ca) ? ca : 0,
+                        Balance = decimal.TryParse(t.ClosingBalance, out var clb) ? clb : 0
+                    };
                 }).ToList()
             };
+        }
+
+        private static string NormalizeDescriptionForNarrative(string value)
+        {
+            string trimmed = value.TrimEnd();
+            if (trimmed.EndsWith('.'))
+            {
+                return trimmed.TrimEnd('.') + " ";
+            }
+
+            return trimmed + " ";
         }
 
         public async Task<bool> DebitAccount(string accountNumber, decimal amount)
