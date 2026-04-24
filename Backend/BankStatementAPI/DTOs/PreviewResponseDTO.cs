@@ -8,6 +8,8 @@ namespace BankStatementAPI.DTOs
         public string? AccountToCharge { get; set; }
         public string ChargeMessage { get; set; } = "";
 
+        public string ResidentialAddress { get; set; } = "";
+
         // These come from the updated Statement model
         public string AccountName { get; set; } = "";
         public string AccountNumber { get; set; } = "";

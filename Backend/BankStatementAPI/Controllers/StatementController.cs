@@ -3,8 +3,10 @@ using BankStatementAPI.Models;
 using BankStatementAPI.Services;
 using System.Globalization;
 using System.Security.Claims;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 
 namespace BankStatementAPI.Controllers
 {
@@ -17,6 +19,7 @@ namespace BankStatementAPI.Controllers
         private readonly PdfService _pdfService;
         private readonly AuditService _auditService;
         private readonly IMemoryCache _memoryCache;
+        private readonly ILogger<StatementController> _logger;
 
         private const string PreviewCachePrefix = "statement-preview:";
 
@@ -25,13 +28,15 @@ namespace BankStatementAPI.Controllers
             ChargingService chargingService,
             PdfService pdfService,
             AuditService auditService,
-            IMemoryCache memoryCache)
+            IMemoryCache memoryCache,
+            ILogger<StatementController> logger)
         {
             _bankApiService = bankApiService;
             _chargingService = chargingService;
             _pdfService = pdfService;
             _auditService = auditService;
             _memoryCache = memoryCache;
+            _logger = logger;
         }
 
         // POST /api/statement/preview
@@ -40,6 +45,8 @@ namespace BankStatementAPI.Controllers
         public async Task<IActionResult> Preview(
             [FromBody] StatementRequestDTO request)
         {
+            var totalStopwatch = Stopwatch.StartNew();
+
             // Step 1 — Validate request
             var validation = ValidateRequest(request);
             if (validation != null) return validation;
@@ -53,12 +60,23 @@ namespace BankStatementAPI.Controllers
             DateTime endDate = parseResult.EndDate;
 
             // Step 3 — Fetch statement from bank API
+            var bankFetchStopwatch = Stopwatch.StartNew();
             var statementResult = await _bankApiService.GetStatement(
                 request.AccountNumber, startDate, endDate
             );
+            bankFetchStopwatch.Stop();
+            _logger.LogInformation(
+                "Statement preview bank fetch completed in {ElapsedMs} ms for account {AccountNumber}",
+                bankFetchStopwatch.ElapsedMilliseconds,
+                request.AccountNumber);
 
             if (!statementResult.Success)
             {
+                _logger.LogWarning(
+                    "Statement preview failed after {ElapsedMs} ms for account {AccountNumber}",
+                    totalStopwatch.ElapsedMilliseconds,
+                    request.AccountNumber);
+
                 if (statementResult.StatementNotFound)
                     return NotFound(new { message = statementResult.Message });
 
@@ -74,13 +92,22 @@ namespace BankStatementAPI.Controllers
             int numberOfPages = 1;
             ChargingResult chargePreview = _chargingService.PreviewCharge(request, numberOfPages);
             byte[] previewPdf = Array.Empty<byte>();
+            var renderLoopStopwatch = Stopwatch.StartNew();
 
             for (int attempt = 0; attempt < 3; attempt++)
             {
+                var singleRenderStopwatch = Stopwatch.StartNew();
                 chargePreview = _chargingService.PreviewCharge(request, numberOfPages);
                 previewPdf = _pdfService.GenerateStatement(statement, chargePreview);
 
                 int renderedPages = _pdfService.CountPages(previewPdf);
+                singleRenderStopwatch.Stop();
+                _logger.LogInformation(
+                    "Statement preview render attempt {Attempt} completed in {ElapsedMs} ms with {RenderedPages} pages",
+                    attempt + 1,
+                    singleRenderStopwatch.ElapsedMilliseconds,
+                    renderedPages);
+
                 if (renderedPages == numberOfPages)
                 {
                     break;
@@ -90,9 +117,16 @@ namespace BankStatementAPI.Controllers
             }
 
             // Finalize preview details from a stable rendered page count.
+            var finalRenderStopwatch = Stopwatch.StartNew();
             chargePreview = _chargingService.PreviewCharge(request, numberOfPages);
             previewPdf = _pdfService.GenerateStatement(statement, chargePreview);
             numberOfPages = _pdfService.CountPages(previewPdf);
+            finalRenderStopwatch.Stop();
+            renderLoopStopwatch.Stop();
+            _logger.LogInformation(
+                "Statement preview final render completed in {ElapsedMs} ms; total render loop took {TotalElapsedMs} ms",
+                finalRenderStopwatch.ElapsedMilliseconds,
+                renderLoopStopwatch.ElapsedMilliseconds);
 
             string previewToken = Guid.NewGuid().ToString("N");
             string requestSignature = BuildPreviewSignature(request, startDate, endDate);
@@ -137,6 +171,8 @@ namespace BankStatementAPI.Controllers
         public async Task<IActionResult> Generate(
             [FromBody] StatementRequestDTO request)
         {
+            var totalStopwatch = Stopwatch.StartNew();
+
             // Step 1 — Validate request
             var validation = ValidateRequest(request);
             if (validation != null) return validation;
@@ -150,9 +186,15 @@ namespace BankStatementAPI.Controllers
             DateTime endDate = parseResult.EndDate;
 
             // Step 3 — Fetch statement from bank API
+            var bankFetchStopwatch = Stopwatch.StartNew();
             var statementResult = await _bankApiService.GetStatement(
                 request.AccountNumber, startDate, endDate
             );
+            bankFetchStopwatch.Stop();
+            _logger.LogInformation(
+                "Statement generation bank fetch completed in {ElapsedMs} ms for account {AccountNumber}",
+                bankFetchStopwatch.ElapsedMilliseconds,
+                request.AccountNumber);
 
             if (!statementResult.Success)
             {
@@ -212,7 +254,13 @@ namespace BankStatementAPI.Controllers
                 return BadRequest(new { message = chargingResult.Message });
 
             // Step 7 — Generate PDF
+            var pdfStopwatch = Stopwatch.StartNew();
             byte[] pdf = cachedPreviewPdf ?? _pdfService.GenerateStatement(statement, chargingResult);
+            pdfStopwatch.Stop();
+            _logger.LogInformation(
+                "Statement generation PDF step completed in {ElapsedMs} ms for account {AccountNumber}",
+                pdfStopwatch.ElapsedMilliseconds,
+                request.AccountNumber);
 
             string staffUsername = User.Identity?.Name ?? request.StaffUsername;
             string staffFullName =
@@ -243,6 +291,12 @@ namespace BankStatementAPI.Controllers
             {
                 _memoryCache.Remove(BuildPreviewCacheKey(previewToken));
             }
+
+            totalStopwatch.Stop();
+            _logger.LogInformation(
+                "Statement generation finished in {ElapsedMs} ms for account {AccountNumber}",
+                totalStopwatch.ElapsedMilliseconds,
+                request.AccountNumber);
 
             // Step 8 — Return PDF as downloadable file
             return File(pdf, "application/pdf",
