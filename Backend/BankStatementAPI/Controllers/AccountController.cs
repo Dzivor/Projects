@@ -28,7 +28,13 @@ namespace BankStatementAPI.Controllers
             if (!result.Success)
             {
                 if (result.AccountNotFound)
-                    return NotFound(new { message = result.Message });
+                    return NotFound(new
+                    {
+                        message = result.Message,
+                        code = result.ErrorCode,
+                        selectedChannel = result.SelectedChannel,
+                        suggestedChannel = result.SuggestedChannel
+                    });
 
                 return StatusCode(503, new { message = result.Message });
             }

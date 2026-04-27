@@ -14,6 +14,8 @@ import { logoutUser } from "../services/session";
 import PreviewChargesModal from "./PreviewChargesModal";
 
 const ESBStatement = () => {
+  const formatGhsAmount = (amount: number) => `GHS ${amount.toFixed(2)}`;
+
   const navigate = useNavigate();
   const [isPrintLoading, setIsPrintLoading] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
@@ -148,7 +150,7 @@ const ESBStatement = () => {
     setErrorMessage("");
 
     try {
-      const account = await lookupAccount(normalizedAccountNumber);
+      const account = await lookupAccount(normalizedAccountNumber, "ESB");
 
       if (requestId !== latestLookupRequestIdRef.current) {
         return;
@@ -342,7 +344,7 @@ const ESBStatement = () => {
         }
         accountName={previewResults?.accountName ?? accountName}
         numberOfPages={previewResults?.numberOfPages ?? 0}
-        totalChargeText="0"
+        totalChargeText={formatGhsAmount(previewResults?.totalCharge ?? 0)}
         accountToCharge={previewResults?.accountToCharge}
         isPrinting={isPrintLoading}
         onPrint={() => {
