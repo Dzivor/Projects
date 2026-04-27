@@ -15,17 +15,31 @@ namespace BankStatementAPI.Services
             _config = config;
         }
 
-        private void AddBankApiHeaders(HttpRequestMessage request)
+        private void AddBankApiHeaders(HttpRequestMessage request, string? channel)
         {
             string signOn = _config["BankApi:SignOn"]!;
-            string companyId = _config["BankApi:CompanyId"]!;
+            string companyId = ResolveCompanyId(channel);
 
             request.Headers.Add("credentials", signOn);
             request.Headers.Add("companyId", companyId);
             request.Headers.Add("Accept", "application/json");
         }
 
-        public async Task<AccountLookupResultDTO> GetAccountDetails(string accountNumber)
+        private string ResolveCompanyId(string? channel)
+        {
+            string normalized = string.IsNullOrWhiteSpace(channel)
+                ? "VISA"
+                : channel.Trim().ToUpperInvariant();
+
+            string? mapped = _config[$"BankApi:CompanyIds:{normalized}"];
+            if (!string.IsNullOrWhiteSpace(mapped))
+                return mapped;
+
+            throw new InvalidOperationException(
+                $"No companyId configured for channel '{normalized}'.");
+        }
+
+        public async Task<AccountLookupResultDTO> GetAccountDetails(string accountNumber, string? channel)
         {
             try
             {
@@ -33,7 +47,7 @@ namespace BankStatementAPI.Services
                 string url = $"{baseUrl}/party/umbGetAcctInfo/?accountNo={accountNumber}";
 
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
-                AddBankApiHeaders(request);
+                AddBankApiHeaders(request, channel);
 
                 var response = await _httpClient.SendAsync(request);
 
@@ -82,7 +96,8 @@ namespace BankStatementAPI.Services
         public async Task<StatementLookupResultDTO> GetStatement(
             string accountNumber,
             DateTime startDate,
-            DateTime endDate)
+            DateTime endDate,
+            string channel)
         {
             try
             {
@@ -97,7 +112,7 @@ namespace BankStatementAPI.Services
                              $"&endDate={end}";
 
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
-                AddBankApiHeaders(request);
+                AddBankApiHeaders(request, channel);
 
                 request.Headers.Add("disablePagination", "true");
 
@@ -210,7 +225,7 @@ namespace BankStatementAPI.Services
             return trimmed + " ";
         }
 
-        public async Task<bool> DebitAccount(string accountNumber, decimal amount)
+        public async Task<bool> DebitAccount(string accountNumber, decimal amount, string channel)
         {
             try
             {
@@ -218,7 +233,7 @@ namespace BankStatementAPI.Services
                 string url = $"{baseUrl}/party/payments/createGenericTransfer";
 
                 var request = new HttpRequestMessage(HttpMethod.Post, url);
-                AddBankApiHeaders(request);
+                AddBankApiHeaders(request, channel);
 
                 var body = new
                 {
