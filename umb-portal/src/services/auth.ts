@@ -5,7 +5,7 @@ import {
 } from "./requestManager";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "https://localhost:7174";
+  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5300";
 
 export type LoginRequest = {
   username: string;

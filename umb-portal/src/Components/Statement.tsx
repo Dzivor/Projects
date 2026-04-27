@@ -3,10 +3,17 @@ import { AxiosError } from "axios";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { LogOut } from "lucide-react";
-import { lookupAccount, previewStatement } from "../services/statement";
+import {
+  generateStatementPdf,
+  lookupAccount,
+  previewStatement,
+  type StatementRequest,
+} from "../services/statement";
 import { logoutUser } from "../services/session";
+import PreviewChargesModal from "./PreviewChargesModal";
 
 type StatementPreviewResponse = {
+  previewToken?: string;
   numberOfPages: number;
   totalCharge: number;
   accountToCharge: string;
@@ -16,6 +23,8 @@ type StatementPreviewResponse = {
 };
 
 const VisaStatement = () => {
+  const formatGhsAmount = (amount: number) => `GHS ${amount.toFixed(2)}`;
+
   const navigate = useNavigate();
   const [isLookupLoading, setIsLookupLoading] = useState(false);
   const [accountName, setAccountName] = useState("");
@@ -23,10 +32,73 @@ const VisaStatement = () => {
   const [previewResults, setPreviewResults] =
     useState<StatementPreviewResponse | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [isPrintLoading, setIsPrintLoading] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [previewError, setPreviewError] = useState("");
   const chargeAccountInputRef = useRef<HTMLInputElement>(null);
   const latestLookupRequestIdRef = useRef(0);
   const lastResolvedAccountNumberRef = useRef("");
+
+  const buildRequestPayload = (values: {
+    accountNumber: string;
+    startDate: string;
+    endDate: string;
+    chargeAccNumber: string;
+    chargeAltAccount: boolean;
+    waiveCharge: boolean;
+  }): StatementRequest => {
+    const authUserRaw = localStorage.getItem("authUser");
+    const authUser = authUserRaw ? JSON.parse(authUserRaw) : null;
+
+    return {
+      accountNumber: values.accountNumber,
+      startDate: values.startDate,
+      endDate: values.endDate,
+      channel: "VISA",
+      waiveCharge: values.waiveCharge,
+      chargeAltAccount: values.chargeAltAccount,
+      altAccountNumber: values.chargeAltAccount
+        ? values.chargeAccNumber
+        : undefined,
+      staffUsername: authUser?.username ?? "SYSTEM",
+    };
+  };
+
+  const handlePrint = async () => {
+    setPreviewError("");
+    setIsPrintLoading(true);
+
+    try {
+      const payload = {
+        ...buildRequestPayload(formik.values),
+        previewToken: previewResults?.previewToken,
+      };
+      const pdfBlob = await generateStatementPdf(payload);
+
+      const downloadUrl = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `VISA_Statement_${payload.accountNumber}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(downloadUrl);
+
+      setIsPreviewModalOpen(false);
+    } catch (error) {
+      if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
+        return;
+      }
+
+      if (error instanceof AxiosError) {
+        setPreviewError(
+          error.response?.data?.message ?? "Print failed. Please try again.",
+        );
+      } else {
+        setPreviewError("Print failed. Please try again.");
+      }
+    } finally {
+      setIsPrintLoading(false);
+    }
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -41,22 +113,10 @@ const VisaStatement = () => {
       setIsPreviewLoading(true);
       setPreviewError("");
       setPreviewResults(null);
+      setIsPreviewModalOpen(false);
 
       try {
-        const payload = {
-          accountNumber: values.accountNumber,
-          startDate: values.startDate,
-          endDate: values.endDate,
-          channel: "VISA" as const,
-          waiveCharge: values.waiveCharge,
-          chargeAltAccount: values.chargeAltAccount,
-          altAccountNumber: values.chargeAltAccount
-            ? values.chargeAccNumber
-            : undefined,
-          staffUsername: localStorage.getItem("authUser")
-            ? JSON.parse(localStorage.getItem("authUser") || "{}").username
-            : "SYSTEM",
-        };
+        const payload = buildRequestPayload(values);
 
         const response = await previewStatement(payload);
 
@@ -67,6 +127,7 @@ const VisaStatement = () => {
         };
 
         setPreviewResults(result);
+        setIsPreviewModalOpen(true);
       } catch (error) {
         if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
           return;
@@ -152,7 +213,7 @@ const VisaStatement = () => {
       setLookupError("");
 
       try {
-        const account = await lookupAccount(normalizedAccountNumber);
+        const account = await lookupAccount(normalizedAccountNumber, "VISA");
 
         if (requestId !== latestLookupRequestIdRef.current) {
           return;
@@ -405,57 +466,25 @@ const VisaStatement = () => {
         <p className="mb-4 text-center text-sm text-red-600">{previewError}</p>
       )}
 
-      {previewResults && (
-        <section className="flex flex-col items-center justify-center mt-8">
-          <h2 className="text-2xl font-bold mb-6">Preview Charges</h2>
-          <div className="w-full max-w-2xl bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <p className="text-sm text-slate-600">Account Number</p>
-                <p className="text-lg font-semibold text-slate-900">
-                  {previewResults.accountNumber}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-600">Account Name</p>
-                <p className="text-lg font-semibold text-slate-900">
-                  {previewResults.accountName}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-600">Number of Pages</p>
-                <p className="text-lg font-semibold text-slate-900">
-                  {previewResults.numberOfPages}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-600">Total Charge</p>
-                <p
-                  className={`text-lg font-semibold ${formik.values.waiveCharge ? "text-green-600" : "text-slate-900"}`}
-                >
-                  {formik.values.waiveCharge
-                    ? "Free (Waived)"
-                    : `${previewResults.totalCharge}`}
-                </p>
-              </div>
-              <div className="col-span-2">
-                <p className="text-sm text-slate-600">Account to Charge</p>
-                <p className="text-lg font-semibold text-slate-900">
-                  {previewResults.accountToCharge}
-                </p>
-              </div>
-              {previewResults.chargeMessage && (
-                <div className="col-span-2">
-                  <p className="text-sm text-slate-600">Charge Message</p>
-                  <p className="text-sm text-slate-700 mt-1">
-                    {previewResults.chargeMessage}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
+      <PreviewChargesModal
+        isOpen={isPreviewModalOpen}
+        title="Preview Charges"
+        message={previewResults?.chargeMessage ?? "Preview generated."}
+        accountNumber={previewResults?.accountNumber ?? ""}
+        accountName={previewResults?.accountName ?? ""}
+        numberOfPages={previewResults?.numberOfPages ?? 0}
+        totalChargeText={
+          formik.values.waiveCharge
+            ? `${formatGhsAmount(0)} (Waived)`
+            : formatGhsAmount(previewResults?.totalCharge ?? 0)
+        }
+        accountToCharge={previewResults?.accountToCharge}
+        isPrinting={isPrintLoading}
+        onPrint={() => {
+          void handlePrint();
+        }}
+        onCancel={() => setIsPreviewModalOpen(false)}
+      />
     </main>
   );
 };

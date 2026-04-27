@@ -40,7 +40,7 @@ function Welcome() {
 
           <button
             type="button"
-            onClick={() => navigate("/esb-statement")}
+            onClick={() => navigate("/ESB-Statement")}
             className="rounded-xl border border-[#d69f21] bg-[#f8fafc] px-6 py-4 text-base font-semibold text-slate-900 transition hover:bg-[#fff7e3]"
           >
             ESB Statement

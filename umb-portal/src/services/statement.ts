@@ -5,7 +5,7 @@ import {
 } from "./requestManager";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "https://localhost:7174";
+  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5300";
 
 type StatementRequest = {
   accountNumber: string;
@@ -15,10 +15,12 @@ type StatementRequest = {
   waiveCharge: boolean;
   chargeAltAccount: boolean;
   altAccountNumber?: string;
+  previewToken?: string;
   staffUsername: string;
 };
 
 type StatementPreviewResponse = {
+  previewToken: string;
   numberOfPages: number;
   totalCharge: number;
   accountToCharge: string;
@@ -82,12 +84,13 @@ export const generateStatementPdf = async (
 
 export const lookupAccount = async (
   accountNumber: string,
+  channel: "VISA" | "ESB",
 ): Promise<AccountLookupResponse> => {
   const controller = createTrackedAbortController();
 
   try {
     const response = await axios.get<AccountLookupResponse>(
-      `${API_BASE_URL}/api/account/lookup/${encodeURIComponent(accountNumber)}`,
+      `${API_BASE_URL}/api/account/lookup/${encodeURIComponent(accountNumber)}?channel=${channel}`,
       {
         headers: getAuthHeader(),
         signal: controller.signal,
