@@ -78,7 +78,13 @@ namespace BankStatementAPI.Controllers
                     request.AccountNumber);
 
                 if (statementResult.StatementNotFound)
-                    return NotFound(new { message = statementResult.Message });
+                    return NotFound(new
+                    {
+                        message = statementResult.Message,
+                        code = statementResult.ErrorCode,
+                        selectedChannel = statementResult.SelectedChannel,
+                        suggestedChannel = statementResult.SuggestedChannel
+                    });
 
                 return StatusCode(503, new { message = statementResult.Message });
             }
@@ -199,7 +205,13 @@ namespace BankStatementAPI.Controllers
             if (!statementResult.Success)
             {
                 if (statementResult.StatementNotFound)
-                    return NotFound(new { message = statementResult.Message });
+                    return NotFound(new
+                    {
+                        message = statementResult.Message,
+                        code = statementResult.ErrorCode,
+                        selectedChannel = statementResult.SelectedChannel,
+                        suggestedChannel = statementResult.SuggestedChannel
+                    });
 
                 return StatusCode(503, new { message = statementResult.Message });
             }
