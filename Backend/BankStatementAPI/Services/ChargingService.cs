@@ -23,7 +23,7 @@ namespace BankStatementAPI.Services
                 "Charging:VisaChargePerPage"
             );
 
-            // Rule 1 — ESB is always free
+            // ESB CHARGE RULE
             if (request.Channel.ToUpper() == "ESB")
             {
                 return new ChargingResult
@@ -45,7 +45,7 @@ namespace BankStatementAPI.Services
                     AccountCharged = string.Empty,
                     Status = ChargeStatus.Waived,
                     NumberOfPages = numberOfPages,
-                    Message = "Charge has been waived"
+                    Message = $"Charge has been waived."
                 };
             }
 
