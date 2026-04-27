@@ -84,12 +84,13 @@ export const generateStatementPdf = async (
 
 export const lookupAccount = async (
   accountNumber: string,
+  channel: "VISA" | "ESB",
 ): Promise<AccountLookupResponse> => {
   const controller = createTrackedAbortController();
 
   try {
     const response = await axios.get<AccountLookupResponse>(
-      `${API_BASE_URL}/api/account/lookup/${encodeURIComponent(accountNumber)}`,
+      `${API_BASE_URL}/api/account/lookup/${encodeURIComponent(accountNumber)}?channel=${channel}`,
       {
         headers: getAuthHeader(),
         signal: controller.signal,
