@@ -230,9 +230,9 @@ const ESBStatement = () => {
       </div>
 
       <section className="flex flex-col items-center justify-center">
-        <h1 className="text-3xl font-bold mb-8 ">ESB Statement</h1>
+        <h1 className="text-3xl font-bold mb-8 ">ESB STATEMENT</h1>
         <h2 className="font-bold text-zinc-600">
-          Welcome to your ESB Statement
+          Welcome to the ESB Statement Printing Portal
         </h2>
         <p className="text-sm">Enter the details to print your statement</p>
       </section>
