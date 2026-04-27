@@ -25,6 +25,10 @@ const PreviewChargesModal = ({
   onPrint,
   onCancel,
 }: PreviewChargesModalProps) => {
+  const displayAccountToCharge = accountToCharge
+    ? accountToCharge.replace(/^\s*GHS\s*/i, "").trim()
+    : "";
+
   if (!isOpen) {
     return null;
   }
@@ -62,12 +66,14 @@ const PreviewChargesModal = ({
           <div className="col-span-2">
             <p className="text-sm text-slate-600">Account to Charge</p>
             <p className="text-lg font-semibold text-slate-900">
-              {accountToCharge || "N/A"}
+              {displayAccountToCharge || "N/A"}
             </p>
           </div>
           <div className="col-span-2">
             <p className="text-sm text-slate-600">Charge Message</p>
-            <p className="mt-1 text-sm text-slate-700">{message}</p>
+            <p className="mt-1 text-sm text-slate-900 font-semibold ">
+              {message}
+            </p>
           </div>
         </div>
 

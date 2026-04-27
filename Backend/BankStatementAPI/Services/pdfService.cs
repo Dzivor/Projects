@@ -50,7 +50,7 @@ namespace BankStatementAPI.Services
                 {
                     page.Size(PageSizes.A4);
                     page.Margin(30);
-                    page.DefaultTextStyle(x => x.FontSize(16.0f).FontFamily(Fonts.TimesRoman));
+                    page.DefaultTextStyle(x => x.FontSize(9.0f).FontFamily(Fonts.TimesRoman));
 
                     // ── HEADER ──
                     page.Header().Column(col =>

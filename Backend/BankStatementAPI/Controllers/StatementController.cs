@@ -62,7 +62,7 @@ namespace BankStatementAPI.Controllers
             // Step 3 — Fetch statement from bank API
             var bankFetchStopwatch = Stopwatch.StartNew();
             var statementResult = await _bankApiService.GetStatement(
-                request.AccountNumber, startDate, endDate
+                request.AccountNumber, startDate, endDate, request.Channel
             );
             bankFetchStopwatch.Stop();
             _logger.LogInformation(
@@ -78,15 +78,21 @@ namespace BankStatementAPI.Controllers
                     request.AccountNumber);
 
                 if (statementResult.StatementNotFound)
-                    return NotFound(new { message = statementResult.Message });
+                    return NotFound(new
+                    {
+                        message = statementResult.Message,
+                        code = statementResult.ErrorCode,
+                        selectedChannel = statementResult.SelectedChannel,
+                        suggestedChannel = statementResult.SuggestedChannel
+                    });
 
                 return StatusCode(503, new { message = statementResult.Message });
             }
 
             var statement = statementResult.Statement!;
             statement.Channel = request.Channel;
-            statement.StartDate = startDate;
-            statement.EndDate = endDate;
+            statement.StartDate = DateOnly.FromDateTime(startDate);
+            statement.EndDate = DateOnly.FromDateTime(endDate);
 
             // Step 4 — Build a rendered preview and derive pages from actual PDF layout.
             int numberOfPages = 1;
@@ -188,7 +194,7 @@ namespace BankStatementAPI.Controllers
             // Step 3 — Fetch statement from bank API
             var bankFetchStopwatch = Stopwatch.StartNew();
             var statementResult = await _bankApiService.GetStatement(
-                request.AccountNumber, startDate, endDate
+                request.AccountNumber, startDate, endDate, request.Channel
             );
             bankFetchStopwatch.Stop();
             _logger.LogInformation(
@@ -199,15 +205,21 @@ namespace BankStatementAPI.Controllers
             if (!statementResult.Success)
             {
                 if (statementResult.StatementNotFound)
-                    return NotFound(new { message = statementResult.Message });
+                    return NotFound(new
+                    {
+                        message = statementResult.Message,
+                        code = statementResult.ErrorCode,
+                        selectedChannel = statementResult.SelectedChannel,
+                        suggestedChannel = statementResult.SuggestedChannel
+                    });
 
                 return StatusCode(503, new { message = statementResult.Message });
             }
 
             var statement = statementResult.Statement!;
             statement.Channel = request.Channel;
-            statement.StartDate = startDate;
-            statement.EndDate = endDate;
+            statement.StartDate = DateOnly.FromDateTime(startDate);
+            statement.EndDate = DateOnly.FromDateTime(endDate);
 
             string previewToken = request.PreviewToken?.Trim() ?? string.Empty;
             byte[]? cachedPreviewPdf = null;
