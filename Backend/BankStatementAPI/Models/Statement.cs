@@ -11,8 +11,8 @@ namespace BankStatementAPI.Models
         public string PostalAddress { get; set; } = "";
         public string BranchAddress { get; set; } = "";
         public string Channel { get; set; } = "";
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
+        public DateOnly StartDate { get; set; }
+        public DateOnly EndDate { get; set; }
         public decimal OpeningBalance { get; set; }
         public decimal BookBalance { get; set; }
         public decimal ClearBalance { get; set; }

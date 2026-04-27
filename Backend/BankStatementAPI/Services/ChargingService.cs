@@ -23,7 +23,7 @@ namespace BankStatementAPI.Services
                 "Charging:VisaChargePerPage"
             );
 
-            // Rule 1 — ESB is always free
+            // ESB CHARGE RULE
             if (request.Channel.ToUpper() == "ESB")
             {
                 return new ChargingResult
