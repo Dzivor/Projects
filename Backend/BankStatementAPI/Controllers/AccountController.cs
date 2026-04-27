@@ -18,17 +18,23 @@ namespace BankStatementAPI.Controllers
 
         // GET /api/account/lookup/1234567890
         [HttpGet("lookup/{accountNumber}")]
-        public async Task<IActionResult> LookupAccount(string accountNumber)
+        public async Task<IActionResult> LookupAccount(string accountNumber, [FromQuery] string? channel)
         {
             if (string.IsNullOrEmpty(accountNumber))
                 return BadRequest(new { message = "Account number is required" });
 
-            var result = await _bankApiService.GetAccountDetails(accountNumber);
+            var result = await _bankApiService.GetAccountDetails(accountNumber, channel);
 
             if (!result.Success)
             {
                 if (result.AccountNotFound)
-                    return NotFound(new { message = result.Message });
+                    return NotFound(new
+                    {
+                        message = result.Message,
+                        code = result.ErrorCode,
+                        selectedChannel = result.SelectedChannel,
+                        suggestedChannel = result.SuggestedChannel
+                    });
 
                 return StatusCode(503, new { message = result.Message });
             }

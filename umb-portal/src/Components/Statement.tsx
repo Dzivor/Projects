@@ -23,6 +23,8 @@ type StatementPreviewResponse = {
 };
 
 const VisaStatement = () => {
+  const formatGhsAmount = (amount: number) => `GHS ${amount.toFixed(2)}`;
+
   const navigate = useNavigate();
   const [isLookupLoading, setIsLookupLoading] = useState(false);
   const [accountName, setAccountName] = useState("");
@@ -211,7 +213,7 @@ const VisaStatement = () => {
       setLookupError("");
 
       try {
-        const account = await lookupAccount(normalizedAccountNumber);
+        const account = await lookupAccount(normalizedAccountNumber, "VISA");
 
         if (requestId !== latestLookupRequestIdRef.current) {
           return;
@@ -473,8 +475,8 @@ const VisaStatement = () => {
         numberOfPages={previewResults?.numberOfPages ?? 0}
         totalChargeText={
           formik.values.waiveCharge
-            ? "Free (Waived)"
-            : `${previewResults?.totalCharge ?? 0}`
+            ? `${formatGhsAmount(0)} (Waived)`
+            : formatGhsAmount(previewResults?.totalCharge ?? 0)
         }
         accountToCharge={previewResults?.accountToCharge}
         isPrinting={isPrintLoading}
