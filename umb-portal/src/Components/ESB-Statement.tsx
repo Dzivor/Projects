@@ -229,108 +229,120 @@ const ESBStatement = () => {
         </button>
       </div>
 
-      <section className="flex flex-col items-center justify-center">
-        <h1 className="text-3xl font-bold mb-8 ">ESB STATEMENT</h1>
-        <h2 className="font-bold text-zinc-600">
-          Welcome to the ESB Statement Printing Portal
-        </h2>
-        <p className="text-sm">Enter the details to print your statement</p>
+      <section className="flex justify-center px-4 pt-6">
+        <div className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white/90 px-6 py-8 text-center shadow-sm backdrop-blur-sm sm:px-10 sm:py-10">
+          <h1 className="text-3xl font-semibold tracking-[0.18em] text-slate-900 sm:text-4xl">
+            ESB STATEMENT
+          </h1>
+          <h2 className="mt-4 text-lg font-medium text-slate-600 sm:text-xl">
+            Welcome to the ESB Statement Printing Portal
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-500 sm:text-base">
+            Enter the details to print your statement
+          </p>
+        </div>
       </section>
 
-      <div className="flex items-center justify-center px-2 py-8">
-        <form
-          onSubmit={formik.handleSubmit}
-          className="grid w-full max-w-2xl grid-cols-[200px_1fr] items-center gap-x-4 gap-y-10"
-        >
-          <label
-            htmlFor="accountNumber"
-            className="text-sm font-medium text-slate-700"
+      <div className="flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <form
+            onSubmit={formik.handleSubmit}
+            className="grid w-full grid-cols-[200px_1fr] items-center gap-x-4 gap-y-10"
           >
-            Account Number:
-          </label>
-          <input
-            id="accountNumber"
-            name="accountNumber"
-            value={formik.values.accountNumber}
-            onChange={handlePrimaryAccountNumberChange}
-            onBlur={formik.handleBlur}
-            inputMode="numeric"
-            maxLength={13}
-            minLength={13}
-            pattern="[0-9]{13}"
-            required
-            title="Account number must be exactly 13 digits"
-            placeholder="Enter Account Number"
-            className="w-full rounded border p-2"
-          />
-
-          <label className="text-sm font-medium text-slate-700">
-            Account Name:
-          </label>
-          <input
-            value={isLookupLoading ? "Loading account name..." : accountName}
-            readOnly
-            placeholder="Account name will appear here"
-            className="w-full rounded border bg-slate-50 p-2 text-slate-700"
-          />
-
-          <label
-            htmlFor="startDate"
-            className="text-sm font-medium text-slate-700"
-          >
-            Start Date:
-          </label>
-          <div className="relative">
-            <input
-              id="startDate"
-              type="date"
-              required
-              name="startDate"
-              value={formik.values.startDate}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              onKeyDown={blockManualDateTyping}
-              onPaste={(e) => e.preventDefault()}
-              className="w-full rounded border p-2 pr-10"
-            />
-          </div>
-
-          <label
-            htmlFor="endDate"
-            className="text-sm font-medium text-slate-700"
-          >
-            End Date:
-          </label>
-          <div className="relative">
-            <input
-              id="endDate"
-              type="date"
-              name="endDate"
-              value={formik.values.endDate}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              required
-              onKeyDown={blockManualDateTyping}
-              onPaste={(e) => e.preventDefault()}
-              className="w-full rounded border p-2 pr-10"
-            />
-          </div>
-
-          <div className="col-span-2 flex justify-center">
-            <button
-              type="submit"
-              disabled={isPreviewLoading}
-              className="rounded bg-amber-400 px-4 py-2 text-white"
+            <label
+              htmlFor="accountNumber"
+              className="text-sm font-medium text-slate-700"
             >
-              {isPreviewLoading ? "Loading Preview..." : "Print"}
-            </button>
-          </div>
-        </form>
-      </div>
+              Account Number:
+            </label>
+            <input
+              id="accountNumber"
+              name="accountNumber"
+              value={formik.values.accountNumber}
+              onChange={handlePrimaryAccountNumberChange}
+              onBlur={formik.handleBlur}
+              inputMode="numeric"
+              maxLength={13}
+              minLength={13}
+              pattern="[0-9]{13}"
+              required
+              title="Account number must be exactly 13 digits"
+              placeholder="Enter Account Number"
+              className="w-full rounded border p-2"
+            />
 
-      {errorMessage && (
-        <p className="mb-4 text-center text-sm text-red-600">{errorMessage}</p>
-      )}
+            {errorMessage && (
+              <div className="col-span-2">
+                <p className="rounded-md bg-red-50 p-3 text-sm text-red-700 border border-red-200">
+                  {errorMessage}
+                </p>
+              </div>
+            )}
+
+            <label className="text-sm font-medium text-slate-700">
+              Account Name:
+            </label>
+            <input
+              value={isLookupLoading ? "Loading account name..." : accountName}
+              readOnly
+              placeholder="Account name will appear here"
+              className="w-full rounded border bg-slate-50 p-2 text-slate-700"
+            />
+
+            <label
+              htmlFor="startDate"
+              className="text-sm font-medium text-slate-700"
+            >
+              Start Date:
+            </label>
+            <div className="relative">
+              <input
+                id="startDate"
+                type="date"
+                required
+                name="startDate"
+                value={formik.values.startDate}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                onKeyDown={blockManualDateTyping}
+                onPaste={(e) => e.preventDefault()}
+                className="w-full rounded border p-2 pr-10"
+              />
+            </div>
+
+            <label
+              htmlFor="endDate"
+              className="text-sm font-medium text-slate-700"
+            >
+              End Date:
+            </label>
+            <div className="relative">
+              <input
+                id="endDate"
+                type="date"
+                name="endDate"
+                value={formik.values.endDate}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                required
+                onKeyDown={blockManualDateTyping}
+                onPaste={(e) => e.preventDefault()}
+                className="w-full rounded border p-2 pr-10"
+              />
+            </div>
+
+            <div className="col-span-2 flex justify-center">
+              <button
+                type="submit"
+                disabled={isPreviewLoading}
+                className="rounded bg-amber-400 px-4 py-2 text-white"
+              >
+                {isPreviewLoading ? "Loading Preview..." : "Print"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
 
       <PreviewChargesModal
         isOpen={isPreviewModalOpen}

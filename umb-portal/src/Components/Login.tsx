@@ -60,15 +60,16 @@ function Login() {
   });
 
   return (
-    <main
-      className="flex min-h-screen items-center justify-center px-4"
-      style={{
-        backgroundImage: `url(${bgPattern})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
-      <section className="w-full max-w-100 rounded-[18px] bg-[#ffffff] px-4 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.28)]">
+    <main className="relative flex min-h-screen items-center justify-center px-4">
+      <img
+        src={bgPattern}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="absolute inset-0 bg-slate-950/55" />
+
+      <section className="relative z-10 w-full max-w-100 rounded-[18px] bg-[#ffffff] px-4 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.28)]">
         <header className="mb-8 flex justify-center">
           <img src={umbLogo} alt="UMB Logo" className="h-25 w-28 py-1 px-2" />
         </header>
