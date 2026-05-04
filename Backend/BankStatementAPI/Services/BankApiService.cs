@@ -179,19 +179,39 @@ namespace BankStatementAPI.Services
                     };
                 }
 
-                if (apiResponse.Body == null || apiResponse.Body.Count == 0)
-                {
-                    string suggestedChannel = GetSuggestedChannel(selectedChannel);
-                    return new StatementLookupResultDTO
+                    if (apiResponse.Body == null)
+                        return new StatementLookupResultDTO
+                        {
+                            Success = false,
+                            StatementNotFound = false,
+                            Message = "Unable to fetch statement at this time. Please try again later."
+                        };
+
+                    if (apiResponse.Header.Status != "success")
                     {
-                        Success = false,
-                        StatementNotFound = true,
-                        Message = BuildChannelNotFoundMessage(selectedChannel),
-                        ErrorCode = AccountNotFoundInChannelCode,
-                        SelectedChannel = selectedChannel,
-                        SuggestedChannel = suggestedChannel
-                    };
-                }
+                        string suggestedChannel = GetSuggestedChannel(selectedChannel);
+                        return new StatementLookupResultDTO
+                        {
+                            Success = false,
+                            StatementNotFound = true,
+                            Message = BuildChannelNotFoundMessage(selectedChannel),
+                            ErrorCode = AccountNotFoundInChannelCode,
+                            SelectedChannel = selectedChannel,
+                            SuggestedChannel = suggestedChannel
+                        };
+                    }
+
+                    // If the API returned an empty body (no transactions) but the call was
+                    // successful, return an empty Statement so the caller can still render/print it.
+                    if (apiResponse.Body.Count == 0)
+                    {
+                        return new StatementLookupResultDTO
+                        {
+                            Success = true,
+                            StatementNotFound = false,
+                            Statement = MapToStatement(apiResponse)
+                        };
+                    }
 
                 return new StatementLookupResultDTO
                 {
