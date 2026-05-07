@@ -38,7 +38,7 @@ namespace BankStatementAPI.Services
                 {
                     page.Size(PageSizes.A4);
                     page.Margin(30);
-                    page.DefaultTextStyle(x => x.FontSize(8.30f).FontFamily(Fonts.Verdana));
+                    page.DefaultTextStyle(x => x.FontSize(8.10f).FontFamily(Fonts.Verdana));
 
                     // ── HEADER ──
                     page.Header().Column(col =>
@@ -115,7 +115,7 @@ namespace BankStatementAPI.Services
                                     .Text("Value Date").Bold();
                                 header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).AlignCenter()
                                     .Text("Debit").Bold();
-                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).AlignLeft()
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).AlignCenter()
                                     .Text("Credit").Bold();
                                 header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).AlignRight()
                                     .Text("Balance").Bold();
