@@ -104,9 +104,9 @@ namespace BankStatementAPI.Controllers
             {
                 var singleRenderStopwatch = Stopwatch.StartNew();
                 chargePreview = _chargingService.PreviewCharge(request, numberOfPages);
-                previewPdf = _pdfService.GenerateStatement(statement, chargePreview);
+                (previewPdf, int renderedPages) = _pdfService.GenerateStatement(statement, chargePreview);
 
-                int renderedPages = _pdfService.CountPages(previewPdf);
+                
                 singleRenderStopwatch.Stop();
                 _logger.LogInformation(
                     "Statement preview render attempt {Attempt} completed in {ElapsedMs} ms with {RenderedPages} pages",
@@ -125,7 +125,7 @@ namespace BankStatementAPI.Controllers
             // Finalize preview details from a stable rendered page count.
             var finalRenderStopwatch = Stopwatch.StartNew();
             chargePreview = _chargingService.PreviewCharge(request, numberOfPages);
-            previewPdf = _pdfService.GenerateStatement(statement, chargePreview);
+            (previewPdf, numberOfPages)=_pdfService.GenerateStatement(statement, chargePreview);
             numberOfPages = _pdfService.CountPages(previewPdf);
             finalRenderStopwatch.Stop();
             renderLoopStopwatch.Stop();
@@ -253,7 +253,9 @@ namespace BankStatementAPI.Controllers
             else
             {
                 // Fallback path for clients that do not send preview token.
-                numberOfPages = _pdfService.CalculateNumberOfPages(statement);
+                var (_, fallbackPages) = _pdfService.GenerateStatement(
+    statement, new ChargingResult { TotalCharge = 0 });
+numberOfPages = fallbackPages;
             }
 
             // Step 5 — Process charge (actually debits account)
@@ -267,8 +269,7 @@ namespace BankStatementAPI.Controllers
 
             // Step 7 — Generate PDF
             var pdfStopwatch = Stopwatch.StartNew();
-            byte[] pdf = cachedPreviewPdf ?? _pdfService.GenerateStatement(statement, chargingResult);
-            pdfStopwatch.Stop();
+          byte[] pdf = cachedPreviewPdf ?? _pdfService.GenerateStatement(statement, chargingResult).PdfBytes;            pdfStopwatch.Stop();
             _logger.LogInformation(
                 "Statement generation PDF step completed in {ElapsedMs} ms for account {AccountNumber}",
                 pdfStopwatch.ElapsedMilliseconds,
