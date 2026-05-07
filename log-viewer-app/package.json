@@ -1,0 +1,22 @@
+{
+  "name": "log-viewer-app",
+  "version": "1.0.0",
+  "description": "This is a log viewing application allowing users to view logs of BankStatements generated and the relevant information about these statements.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "ldapjs": "^3.0.7",
+    "mssql": "^12.5.2"
+  }
+}

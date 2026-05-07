@@ -117,7 +117,7 @@ namespace BankStatementAPI.Services
                                     .Text("Debit").Bold();
                                 header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).AlignLeft()
                                     .Text("Credit").Bold();
-                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).AlignCenter()
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).AlignRight()
                                     .Text("Balance").Bold();
                             });
 
@@ -141,7 +141,7 @@ namespace BankStatementAPI.Services
                                     .Text(t.Debit > 0 ? $"{t.Debit:N2}" : "");
                                 table.Cell().PaddingVertical(transactionRowPadding).AlignLeft()
                                     .Text(t.Credit > 0 ? $"{t.Credit:N2}" : "");
-                                table.Cell().PaddingVertical(transactionRowPadding).AlignLeft()
+                                table.Cell().PaddingVertical(transactionRowPadding).AlignRight()
                                     .Text($"{t.Balance:N2}");
                             }
                         });
