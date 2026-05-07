@@ -13,35 +13,23 @@ namespace BankStatementAPI.Services
             QuestPDF.Settings.License = LicenseType.Community;
         }
 
-        // Calculates pages based on transaction count
-        public int CalculateNumberOfPages(Statement statement)
-        {
-            const int transactionsPerPage = 30;
-            int pages = (int)Math.Ceiling(
-                (double)statement.Transactions.Count / transactionsPerPage
-            );
-            return Math.Max(1, pages);
-        }
-
-        public byte[] GenerateStatement(
+        public (byte[] PdfBytes, int PageCount) GenerateStatement(
             Statement statement,
             ChargingResult chargingResult)
         {
             const float letterheadReservedHeight = 95f;
-            const float transactionRowPadding = 5f;
+            const float transactionRowPadding = 7f;
 
-            bool hasPostalAddress = !string.IsNullOrWhiteSpace(statement.PostalAddress);
-
-            string postalLine = hasPostalAddress
+            string postalLine = !string.IsNullOrWhiteSpace(statement.PostalAddress)
                 ? statement.PostalAddress
                 : "No postal address available";
 
-            string? streetLine = hasPostalAddress
-                ? (string.IsNullOrWhiteSpace(statement.StreetAddress)
-                    ? (string.IsNullOrWhiteSpace(statement.ResidentialAddress)
-                        ? null
-                        : statement.ResidentialAddress)
-                    : statement.StreetAddress)
+            string? streetLine = !string.IsNullOrWhiteSpace(statement.StreetAddress)
+                ? statement.StreetAddress
+                : null;
+
+            string? residentialLine = !string.IsNullOrWhiteSpace(statement.ResidentialAddress)
+                ? statement.ResidentialAddress
                 : null;
 
             var document = Document.Create(container =>
@@ -50,23 +38,23 @@ namespace BankStatementAPI.Services
                 {
                     page.Size(PageSizes.A4);
                     page.Margin(30);
-                    page.DefaultTextStyle(x => x.FontSize(9.0f).FontFamily(Fonts.TimesRoman));
+                    page.DefaultTextStyle(x => x.FontSize(8.30f).FontFamily(Fonts.Verdana));
 
                     // ── HEADER ──
                     page.Header().Column(col =>
                     {
-                        // Keep a clear area for the bank letterhead/logo.
                         col.Item().Height(letterheadReservedHeight);
 
                         col.Item().Column(c =>
                         {
                             c.Item().Text(statement.AccountName).Bold();
                             c.Item().Text(postalLine);
-                            // If street line is available, show it below the postal line. Otherwise, show residential address if available
-                            c.Item().Text(statement.ResidentialAddress);
 
-                            if (!string.IsNullOrWhiteSpace(streetLine))
+                            if (streetLine != null)
                                 c.Item().Text(streetLine);
+
+                            if (residentialLine != null)
+                                c.Item().Text(residentialLine);
                         });
 
                         col.Item().PaddingTop(8).Row(row =>
@@ -85,7 +73,6 @@ namespace BankStatementAPI.Services
                                 .Text($"From: {statement.StartDate:dd MMM yyyy} To: {statement.EndDate:dd MMM yyyy}")
                                 .Bold();
                             row.RelativeItem().AlignRight().Text("CCY: GHANA CEDIS");
-                           
                         });
 
                         col.Item().PaddingTop(8).BorderBottom(1);
@@ -99,6 +86,7 @@ namespace BankStatementAPI.Services
                         x.Span(" of ");
                         x.TotalPages();
                     });
+
                     // ── CONTENT ──
                     page.Content().Column(col =>
                     {
@@ -108,28 +96,28 @@ namespace BankStatementAPI.Services
                         {
                             table.ColumnsDefinition(columns =>
                             {
-                                columns.RelativeColumn(2); // Booking Date
-                                columns.RelativeColumn(5.5f); // Narrative (wraps earlier to keep clear gutter)
-                                columns.RelativeColumn(2.5f); // Value Date
-                                columns.RelativeColumn(2); // Debit
-                                columns.RelativeColumn(2); // Credit
-                                columns.RelativeColumn(2); // Balance
+                                columns.RelativeColumn(2);      // Booking Date
+                                columns.RelativeColumn(5.4f);   // Narrative
+                                columns.RelativeColumn(2);      // Value Date
+                                columns.RelativeColumn(2.16f);  // Debit
+                                columns.RelativeColumn(2.16f);  // Credit
+                                columns.RelativeColumn(2.216f); // Balance
                             });
 
                             // Table header row
                             table.Header(header =>
                             {
-                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4)
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5)
                                     .Text("Booking Date").Bold();
-                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4).PaddingRight(10)
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).PaddingRight(10)
                                     .Text("Narrative").Bold();
-                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4).PaddingLeft(8)
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).PaddingLeft(8)
                                     .Text("Value Date").Bold();
-                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4).AlignRight()
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).AlignCenter()
                                     .Text("Debit").Bold();
-                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4).AlignRight()
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).AlignLeft()
                                     .Text("Credit").Bold();
-                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(4).AlignRight()
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).AlignRight()
                                     .Text("Balance").Bold();
                             });
 
@@ -139,55 +127,45 @@ namespace BankStatementAPI.Services
                             table.Cell().PaddingVertical(5).AlignRight()
                                 .Text($"{statement.OpeningBalance:N2}");
 
-                            // Transaction rows — using updated field names
+                            // Transaction rows
                             foreach (var t in statement.Transactions)
                             {
-                                table.Cell().PaddingVertical(transactionRowPadding).Text(
-                                    t.BookingDate        // ← updated from Date
-                                    .ToString("dd MMM yyyy")
-                                    .ToUpper()
-                                );
+                                table.Cell().PaddingVertical(transactionRowPadding)
+                                    .Text(t.BookingDate.ToString("dd MMM yyyy").ToUpper());
                                 table.Cell().PaddingVertical(transactionRowPadding).PaddingRight(10)
                                     .Text(string.IsNullOrWhiteSpace(t.Narrative) ? "-" : TrimTrailingFullStop(t.Narrative))
-                                    .LineHeight(1.2f);  // Wrap long narration over multiple lines
-                                table.Cell().PaddingVertical(transactionRowPadding).PaddingLeft(8).Text(
-                                    t.ValueDate          // ← new field
-                                    .ToString("dd MMM yyyy")
-                                    .ToUpper()
-                                );
-                                table.Cell().PaddingVertical(transactionRowPadding).AlignRight()
+                                    .LineHeight(1.2f);
+                                table.Cell().PaddingVertical(transactionRowPadding).PaddingLeft(8)
+                                    .Text(t.ValueDate.ToString("dd MMM yyyy").ToUpper());
+                                table.Cell().PaddingVertical(transactionRowPadding).AlignCenter()
                                     .Text(t.Debit > 0 ? $"{t.Debit:N2}" : "");
-                                table.Cell().PaddingVertical(transactionRowPadding).AlignRight()
+                                table.Cell().PaddingVertical(transactionRowPadding).AlignLeft()
                                     .Text(t.Credit > 0 ? $"{t.Credit:N2}" : "");
                                 table.Cell().PaddingVertical(transactionRowPadding).AlignRight()
                                     .Text($"{t.Balance:N2}");
                             }
                         });
 
-                        // Summary totals — using new Statement fields
+                        // Summary totals
                         col.Item().PaddingTop(10).Column(summary =>
                         {
-                            summary.Item()
-                                .Text($"Book Balance: {statement.BookBalance:N2}");
-                            summary.Item()
-                                .Text($"Clear Balance: {statement.ClearBalance:N2}");
-                            summary.Item()
-                                .Text($"Total Debit Value: {statement.TotalDebitValue:N2}");
-                            summary.Item()
-                                .Text($"Total Credit Value: {statement.TotalCreditValue:N2}");
-                            summary.Item()
-                                .Text($"Total Debit Number: {statement.TotalDebitCount}");
-                            summary.Item()
-                                .Text($"Total Credit Number: {statement.TotalCreditCount}");
+                            summary.Item().Text($"Book Balance: {statement.BookBalance:N2}");
+                            summary.Item().Text($"Clear Balance: {statement.ClearBalance:N2}");
+                            summary.Item().Text($"Total Debit Value: {statement.TotalDebitValue:N2}");
+                            summary.Item().Text($"Total Credit Value: {statement.TotalCreditValue:N2}");
+                            summary.Item().Text($"Total Debit Number: {statement.TotalDebitCount}");
+                            summary.Item().Text($"Total Credit Number: {statement.TotalCreditCount}");
                         });
                     });
                 });
             });
 
-            return document.GeneratePdf();
+            byte[] pdfBytes = document.GeneratePdf();
+            int pageCount = CountPages(pdfBytes);
+
+            return (pdfBytes, pageCount);
         }
 
-        // Counts pages from the rendered PDF bytes to match actual layout pagination.
         public int CountPages(byte[] pdfBytes)
         {
             using var stream = new MemoryStream(pdfBytes);
