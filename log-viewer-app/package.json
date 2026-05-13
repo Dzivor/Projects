@@ -17,6 +17,7 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "ldapjs": "^3.0.7",
-    "mssql": "^12.5.2"
+    "mssql": "^12.5.2",
+    "nodemon": "^3.1.14"
   }
 }
