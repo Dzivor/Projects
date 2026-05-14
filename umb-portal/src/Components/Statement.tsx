@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 import { LogOut } from "lucide-react";
 import {
   generateStatementPdf,
+  getBackendErrorMessage,
   lookupAccount,
   previewStatement,
   type StatementRequest,
@@ -88,13 +89,9 @@ const VisaStatement = () => {
         return;
       }
 
-      if (error instanceof AxiosError) {
-        setPreviewError(
-          error.response?.data?.message ?? "Print failed. Please try again.",
-        );
-      } else {
-        setPreviewError("Print failed. Please try again.");
-      }
+      setPreviewError(
+        await getBackendErrorMessage(error, "Print failed. Please try again."),
+      );
     } finally {
       setIsPrintLoading(false);
     }
