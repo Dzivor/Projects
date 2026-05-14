@@ -36,7 +36,7 @@ namespace BankStatementAPI.Middleware
                 return;
             }
             // ── END DEV BYPASS ──
-
+                
             string? authHeader = context.Request.Headers["Authorization"];
 
             if (string.IsNullOrEmpty(authHeader) ||

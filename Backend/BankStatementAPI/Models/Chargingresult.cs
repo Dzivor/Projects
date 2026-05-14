@@ -10,5 +10,7 @@ namespace BankStatementAPI.Models
         public int NumberOfPages { get; set; }
 
         public string? BankTransactionReference { get; set; }
+
+        public bool WasReversed { get; set; }
     }
 }

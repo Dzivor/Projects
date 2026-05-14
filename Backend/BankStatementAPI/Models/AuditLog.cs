@@ -4,14 +4,13 @@ namespace BankStatementAPI.Models
 {
      public class AuditLog
     {
-        // Primary Key
+        
         public int Id {get; set;}
-       // Staff Information
         public string StaffUsername{get; set;}="";
         public string StaffId{get; set;}="";
         public string StaffFullName {get; set;}="";
 
-        //Statement Request Details
+        
         public string AccountNumber {get; set;}="";
         public string AccountHolderName{get; set;}="";
         public DateOnly StartDate {get; set;}
@@ -27,9 +26,14 @@ namespace BankStatementAPI.Models
 
 
 
-        //Timestamp
+       
+
+        public string? BankTransactionReference {get;set;}
+        public bool WasReversed {get; set;}
+
+        public string? ReversalReason {get; set;}
+
+ //Timestamp
         public DateTime GeneratedAt {get; set;}=DateTime.UtcNow;
-
-
     }
 }
