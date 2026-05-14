@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 import { LogOut } from "lucide-react";
 import {
   generateStatementPdf,
+  getBackendErrorMessage,
   lookupAccount,
   previewStatement,
   type StatementPreviewResponse,
@@ -75,13 +76,9 @@ const ESBStatement = () => {
         return;
       }
 
-      if (error instanceof AxiosError) {
-        setErrorMessage(
-          error.response?.data?.message ?? "Print failed. Please try again.",
-        );
-      } else {
-        setErrorMessage("Print failed. Please try again.");
-      }
+      setErrorMessage(
+        await getBackendErrorMessage(error, "Print failed. Please try again."),
+      );
     } finally {
       setIsPrintLoading(false);
     }

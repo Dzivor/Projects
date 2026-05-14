@@ -39,6 +39,56 @@ const getAuthHeader = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+const readBlobMessage = async (blob: Blob): Promise<string | null> => {
+  try {
+    const text = await blob.text();
+    const parsed = JSON.parse(text) as { message?: unknown };
+    return typeof parsed.message === "string" && parsed.message.trim()
+      ? parsed.message
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+export const getBackendErrorMessage = async (
+  error: unknown,
+  fallbackMessage: string,
+): Promise<string> => {
+  if (!axios.isAxiosError(error)) {
+    return fallbackMessage;
+  }
+
+  const data = error.response?.data;
+
+  if (typeof data === "string" && data.trim()) {
+    try {
+      const parsed = JSON.parse(data) as { message?: unknown };
+      if (typeof parsed.message === "string" && parsed.message.trim()) {
+        return parsed.message;
+      }
+    } catch {
+      return data;
+    }
+  }
+
+  if (data instanceof Blob) {
+    const blobMessage = await readBlobMessage(data);
+    if (blobMessage) {
+      return blobMessage;
+    }
+  }
+
+  if (data && typeof data === "object" && "message" in data) {
+    const message = (data as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) {
+      return message;
+    }
+  }
+
+  return fallbackMessage;
+};
+
 export const previewStatement = async (
   payload: StatementRequest,
 ): Promise<StatementPreviewResponse> => {
