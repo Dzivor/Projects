@@ -24,8 +24,40 @@ type StatementPreviewResponse = {
   accountNumber: string;
 };
 
+const getWelcomeName = (): string => {
+  const authUserRaw = localStorage.getItem("authUser");
+
+  if (!authUserRaw) {
+    return "Guest";
+  }
+
+  try {
+    const authUser = JSON.parse(authUserRaw) as {
+      firstName?: string;
+      fullName?: string;
+    };
+
+    const firstName = authUser.firstName?.trim();
+
+    if (firstName) {
+      return firstName;
+    }
+
+    const fullName = authUser.fullName?.trim();
+
+    if (!fullName) {
+      return "Guest";
+    }
+
+    return fullName.split(/\s+/)[0] || "Guest";
+  } catch {
+    return "Guest";
+  }
+};
+
 const VisaStatement = () => {
   const formatGhsAmount = (amount: number) => `GHS ${amount.toFixed(2)}`;
+  const userName = getWelcomeName();
 
   const navigate = useNavigate();
   const [isLookupLoading, setIsLookupLoading] = useState(false);
@@ -322,7 +354,7 @@ const VisaStatement = () => {
             VISA STATEMENT
           </h1>
           <h2 className="mt-4 text-lg font-medium text-slate-600 sm:text-xl">
-            Welcome to your VISA Statement
+            Welcome, {userName}.
           </h2>
           <p className="mt-2 text-sm leading-6 text-slate-500 sm:text-base">
             Enter the details to preview charges
