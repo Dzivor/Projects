@@ -1,5 +1,6 @@
 using BankStatementAPI.DTOs;
 using BankStatementAPI.Models;
+using System.Text.Json;
 
 namespace BankStatementAPI.Services
 {
@@ -196,7 +197,7 @@ namespace BankStatementAPI.Services
                     return new StatementLookupResultDTO
                     {
                         Success = false,
-                        StatementNotFound = false,
+                        StatementNotFound = true,
                         Message = "Unable to fetch statement at this time. " +
                                   "Please try again later."
                     };
@@ -218,8 +219,8 @@ namespace BankStatementAPI.Services
                     return new StatementLookupResultDTO
                     {
                         Success = false,
-                        StatementNotFound = false,
-                        Message = "Unable to fetch statement at this time. " +
+                        StatementNotFound = true,
+                        Message = "Statement cannot be fetched at this time. " +
                                   "Please try again later."
                     };
 
@@ -346,11 +347,19 @@ namespace BankStatementAPI.Services
                 var response = await _httpClient.SendAsync(request);
 
                 if (!response.IsSuccessStatusCode)
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    string shortMessage = ExtractBankErrorMessage(responseBody)
+                        ?? $"Bank API returned {response.StatusCode}";
                     return new DebitResult
                     {
                         Success = false,
-                        ErrorMessage = $"Bank API returned {response.StatusCode}"
+                        UserMessage = shortMessage,
+                        ErrorMessage = string.IsNullOrWhiteSpace(responseBody)
+                            ? $"Bank API returned {response.StatusCode}"
+                            : $"Bank API returned {response.StatusCode}: {responseBody}"
                     };
+                }
 
                 var result = await response.Content
                     .ReadFromJsonAsync<BankApiTransferResponse>();
@@ -375,9 +384,41 @@ namespace BankStatementAPI.Services
                 return new DebitResult
                 {
                     Success = false,
-                    ErrorMessage = ex.Message
+                    ErrorMessage = ex.Message,
+                    UserMessage = ex.Message
                 };
             }
+        }
+
+        private static string? ExtractBankErrorMessage(string responseBody)
+        {
+            if (string.IsNullOrWhiteSpace(responseBody))
+                return null;
+
+            try
+            {
+                using JsonDocument document = JsonDocument.Parse(responseBody);
+                JsonElement root = document.RootElement;
+
+                if (root.TryGetProperty("error", out JsonElement error) &&
+                    error.TryGetProperty("errorDetails", out JsonElement details) &&
+                    details.ValueKind == JsonValueKind.Array &&
+                    details.GetArrayLength() > 0)
+                {
+                    JsonElement firstDetail = details[0];
+                    if (firstDetail.TryGetProperty("message", out JsonElement message) &&
+                        message.ValueKind == JsonValueKind.String)
+                    {
+                        return message.GetString();
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore parse failures and fall back to the generic status code message.
+            }
+
+            return null;
         }
     }
 
@@ -392,5 +433,6 @@ namespace BankStatementAPI.Services
         public bool Success { get; set; }
         public string? TransactionReference { get; set; }
         public string? ErrorMessage { get; set; }
+        public string? UserMessage { get; set; }
     }
 }
