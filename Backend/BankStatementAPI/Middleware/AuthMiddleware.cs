@@ -26,16 +26,21 @@ namespace BankStatementAPI.Middleware
                 return;
             }
 
-            // ── TEMPORARY DEV BYPASS ──
-            var env = context.RequestServices
-                .GetRequiredService<IWebHostEnvironment>();
+            bool bypassAuthInDevelopment = _config.GetValue<bool>(
+                "Auth:BypassInDevelopment"
+            );
 
-            if (env.IsDevelopment())
+            if (bypassAuthInDevelopment)
             {
-                await _next(context);
-                return;
+                var env = context.RequestServices
+                    .GetRequiredService<IWebHostEnvironment>();
+
+                if (env.IsDevelopment())
+                {
+                    await _next(context);
+                    return;
+                }
             }
-            // ── END DEV BYPASS ──
                 
             string? authHeader = context.Request.Headers["Authorization"];
 
