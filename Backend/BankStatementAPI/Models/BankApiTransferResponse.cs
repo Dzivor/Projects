@@ -97,8 +97,21 @@ namespace BankStatementAPI.Models
         public string Id { get; set; } = "";
     }
 
+    public class BankApiTransferErrorDetail
+    {
+        public string Code { get; set; } = "";
+        public string Message { get; set; } = "";
+    }
+
+    public class BankApiTransferError
+    {
+        public string Type { get; set; } = "";
+        public List<BankApiTransferErrorDetail> ErrorDetails { get; set; } = new();
+    }
+
     public class BankApiTransferResponse
     {
         public TransferResponseHeader Header { get; set; } = new();
+        public BankApiTransferError? Error { get; set; }
     }
 }

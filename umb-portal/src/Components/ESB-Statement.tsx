@@ -76,6 +76,7 @@ const ESBStatement = () => {
         return;
       }
 
+      setIsPreviewModalOpen(false);
       setErrorMessage(
         await getBackendErrorMessage(error, "Print failed. Please try again."),
       );

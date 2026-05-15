@@ -105,14 +105,17 @@ namespace BankStatementAPI.Services
             // Step 4 — Account lookup failed
             if (!accountDetails.Success || accountDetails.Account == null)
             {
+                string message = request.ChargeAltAccount
+                    ? "Invalid charge account. Please provide a vaild UMB account."
+                    : accountDetails.Message ?? $"Could not verify account {accountToCharge}";
+
                 return new ChargingResult
                 {
                     TotalCharge = preview.TotalCharge,
                     AccountCharged = accountToCharge,
                     Status = ChargeStatus.Failed,
                     NumberOfPages = numberOfPages,
-                    Message = accountDetails.Message
-                        ?? $"Could not verify account {accountToCharge}"
+                    Message = message
                 };
             }
 
@@ -152,8 +155,9 @@ namespace BankStatementAPI.Services
                     AccountCharged = accountToCharge,
                     Status = ChargeStatus.Failed,
                     NumberOfPages = numberOfPages,
-                    Message = debitResult.ErrorMessage
-                        ?? $"Transaction failed on account {accountToCharge}"
+                    Message = debitResult.UserMessage
+                        ?? $"Transaction failed on account {accountToCharge}",
+                    ErrorDetails = debitResult.ErrorMessage
                 };
             }
 
