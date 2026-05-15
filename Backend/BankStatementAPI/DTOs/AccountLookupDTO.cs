@@ -5,6 +5,8 @@ namespace BankStatementAPI.DTOs
     {
         public string AccountNumber { get; set; } = "";
         public string AccountName { get; set; } = "";
+
+        public decimal AccountBalance { get; set; }
     }
 
     public class AccountLookupResultDTO
@@ -16,5 +18,6 @@ namespace BankStatementAPI.DTOs
         public string? SelectedChannel { get; set; }
         public string? SuggestedChannel { get; set; }
         public AccountLookupDTO? Account { get; set; }
+        
     }
 }

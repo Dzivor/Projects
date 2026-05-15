@@ -9,7 +9,36 @@ import {
 } from "lucide-react";
 import { logoutUser } from "../services/session";
 
-const userName = "Guest";
+const getWelcomeName = (): string => {
+  const authUserRaw = localStorage.getItem("authUser");
+
+  if (!authUserRaw) {
+    return "Guest";
+  }
+
+  try {
+    const authUser = JSON.parse(authUserRaw) as {
+      firstName?: string;
+      fullName?: string;
+    };
+
+    const firstName = authUser.firstName?.trim();
+
+    if (firstName) {
+      return firstName;
+    }
+
+    const fullName = authUser.fullName?.trim();
+
+    if (!fullName) {
+      return "Guest";
+    }
+
+    return fullName.split(/\s+/)[0] || "Guest";
+  } catch {
+    return "Guest";
+  }
+};
 
 type StatementType = {
   id: string;
@@ -56,6 +85,7 @@ function Welcome() {
   >(null);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
+  const userName = getWelcomeName();
 
   useEffect(() => {
     if (!isAccountMenuOpen) {

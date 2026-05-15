@@ -7,8 +7,11 @@ namespace BankStatementAPI.Models
         public string AccountCharged { get; set; }="";
         public ChargeStatus Status { get; set; }
         public string Message { get; set; } = "";
+        public string? ErrorDetails { get; set; }
         public int NumberOfPages { get; set; }
 
         public string? BankTransactionReference { get; set; }
+
+        public bool WasReversed { get; set; }
     }
 }

@@ -7,11 +7,18 @@ import bgPattern from "../assets/Astek Patern-02.png";
 import umbLogo from "../assets/umb-logo.jpg";
 import { login } from "../services/auth";
 
+const getFirstName = (fullName: string): string => {
+  const firstName = fullName.trim().split(/\s+/)[0];
+
+  return firstName || "Guest";
+};
+
 function Login() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const isDevBypassEnabled = import.meta.env.DEV;
+  // Control the dev bypass explicitly with VITE_DEV_BYPASS (default: disabled)
+  const isDevBypassEnabled = import.meta.env.VITE_DEV_BYPASS === "true";
 
   const formik = useFormik({
     initialValues: {
@@ -27,6 +34,7 @@ function Login() {
         const devUser = {
           token: "dev-bypass-token",
           username: values.username || "dev.user",
+          fullName: "Developer",
           firstName: "Developer",
           expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
         };
@@ -41,9 +49,13 @@ function Login() {
       ///////////////////////////////////////////////////////////
       try {
         const result = await login(values);
+        const authUser = {
+          ...result,
+          firstName: getFirstName(result.fullName),
+        };
 
         localStorage.setItem("authToken", result.token);
-        localStorage.setItem("authUser", JSON.stringify(result));
+        localStorage.setItem("authUser", JSON.stringify(authUser));
 
         navigate("/welcome");
       } catch (error) {

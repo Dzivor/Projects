@@ -5,12 +5,14 @@ import { useNavigate } from "react-router";
 import { LogOut } from "lucide-react";
 import {
   generateStatementPdf,
+  getBackendErrorMessage,
   lookupAccount,
   previewStatement,
   type StatementRequest,
 } from "../services/statement";
 import { logoutUser } from "../services/session";
 import PreviewChargesModal from "./PreviewChargesModal";
+import ErrorModal from "./ErrorModal";
 
 type StatementPreviewResponse = {
   previewToken?: string;
@@ -22,8 +24,40 @@ type StatementPreviewResponse = {
   accountNumber: string;
 };
 
+const getWelcomeName = (): string => {
+  const authUserRaw = localStorage.getItem("authUser");
+
+  if (!authUserRaw) {
+    return "Guest";
+  }
+
+  try {
+    const authUser = JSON.parse(authUserRaw) as {
+      firstName?: string;
+      fullName?: string;
+    };
+
+    const firstName = authUser.firstName?.trim();
+
+    if (firstName) {
+      return firstName;
+    }
+
+    const fullName = authUser.fullName?.trim();
+
+    if (!fullName) {
+      return "Guest";
+    }
+
+    return fullName.split(/\s+/)[0] || "Guest";
+  } catch {
+    return "Guest";
+  }
+};
+
 const VisaStatement = () => {
   const formatGhsAmount = (amount: number) => `GHS ${amount.toFixed(2)}`;
+  const userName = getWelcomeName();
 
   const navigate = useNavigate();
   const [isLookupLoading, setIsLookupLoading] = useState(false);
@@ -34,7 +68,8 @@ const VisaStatement = () => {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [isPrintLoading, setIsPrintLoading] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [previewError, setPreviewError] = useState("");
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const chargeAccountInputRef = useRef<HTMLInputElement>(null);
   const latestLookupRequestIdRef = useRef(0);
   const lastResolvedAccountNumberRef = useRef("");
@@ -65,7 +100,6 @@ const VisaStatement = () => {
   };
 
   const handlePrint = async () => {
-    setPreviewError("");
     setIsPrintLoading(true);
 
     try {
@@ -88,13 +122,13 @@ const VisaStatement = () => {
         return;
       }
 
-      if (error instanceof AxiosError) {
-        setPreviewError(
-          error.response?.data?.message ?? "Print failed. Please try again.",
-        );
-      } else {
-        setPreviewError("Print failed. Please try again.");
-      }
+      setIsPreviewModalOpen(false);
+      const message = await getBackendErrorMessage(
+        error,
+        "Print failed. Please try again.",
+      );
+      setErrorMessage(message);
+      setIsErrorModalOpen(true);
     } finally {
       setIsPrintLoading(false);
     }
@@ -111,7 +145,6 @@ const VisaStatement = () => {
     },
     onSubmit: async (values) => {
       setIsPreviewLoading(true);
-      setPreviewError("");
       setPreviewResults(null);
       setIsPreviewModalOpen(false);
 
@@ -134,12 +167,15 @@ const VisaStatement = () => {
         }
 
         if (error instanceof AxiosError) {
-          setPreviewError(
+          const msg =
             error.response?.data?.message ??
-              "Unable to preview statement. Please try again.",
-          );
+            "Unable to preview statement. Please try again.";
+          setErrorMessage(msg);
+          setIsErrorModalOpen(true);
         } else {
-          setPreviewError("Unable to preview statement.");
+          const msg = "Unable to preview statement.";
+          setErrorMessage(msg);
+          setIsErrorModalOpen(true);
         }
       } finally {
         setIsPreviewLoading(false);
@@ -318,7 +354,7 @@ const VisaStatement = () => {
             VISA STATEMENT
           </h1>
           <h2 className="mt-4 text-lg font-medium text-slate-600 sm:text-xl">
-            Welcome to your VISA Statement
+            Welcome, {userName}.
           </h2>
           <p className="mt-2 text-sm leading-6 text-slate-500 sm:text-base">
             Enter the details to preview charges
@@ -356,7 +392,7 @@ const VisaStatement = () => {
 
             {lookupError && (
               <div className="col-span-2">
-                <p className="rounded-md bg-red-50 p-3 text-sm text-red-700 border border-red-200">
+                <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                   {lookupError}
                 </p>
               </div>
@@ -439,11 +475,12 @@ const VisaStatement = () => {
               name="chargeAccNumber"
               value={formik.values.chargeAccNumber}
               onChange={handleChargeAccountNumberChange}
+              disabled={!formik.values.chargeAltAccount}
               inputMode="numeric"
               maxLength={13}
               minLength={13}
               pattern="[0-9]{13}"
-              title="Fill out this field with a valid account number"
+              title="Fill out this field with a valid UMB account number"
               placeholder=" "
               className="w-full rounded border p-2"
             />
@@ -475,10 +512,6 @@ const VisaStatement = () => {
         </div>
       </div>
 
-      {previewError && (
-        <p className="mb-4 text-center text-sm text-red-600">{previewError}</p>
-      )}
-
       <PreviewChargesModal
         isOpen={isPreviewModalOpen}
         title="Preview Charges"
@@ -497,6 +530,16 @@ const VisaStatement = () => {
           void handlePrint();
         }}
         onCancel={() => setIsPreviewModalOpen(false)}
+      />
+
+      <ErrorModal
+        isOpen={isErrorModalOpen}
+        title="Error"
+        message={errorMessage}
+        onClose={() => {
+          setIsErrorModalOpen(false);
+          setErrorMessage("");
+        }}
       />
     </main>
   );

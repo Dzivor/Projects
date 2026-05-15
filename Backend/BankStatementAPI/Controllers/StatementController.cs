@@ -265,7 +265,11 @@ numberOfPages = fallbackPages;
 
             // Step 6 — Stop if charge failed
             if (chargingResult.Status == ChargeStatus.Failed)
-                return BadRequest(new { message = chargingResult.Message });
+                return BadRequest(new
+                {
+                    message = chargingResult.Message,
+                    details = chargingResult.ErrorDetails
+                });
 
             // Step 7 — Generate PDF
             var pdfStopwatch = Stopwatch.StartNew();

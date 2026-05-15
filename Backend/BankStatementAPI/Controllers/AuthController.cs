@@ -29,18 +29,25 @@ namespace BankStatementAPI.Controllers
                 });
             }
 
-            var result = _authService.Login(request);
-
-            // Login failed — wrong credentials or not in AD
-            if (result == null)
+            try
             {
-                return Unauthorized(new
-                {
-                    message = "Invalid username or password"
-                });
-            }
+                var result = _authService.Login(request);
 
-            return Ok(result);
+                if (result == null)
+                {
+                    return Unauthorized(new { message = "Invalid username or password" });
+                }
+
+                return Ok(result);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { message = "Invalid username or password" });
+            }
+            catch
+            {
+                return StatusCode(500, new { message = "An error occurred while processing the login." });
+            }
         }
     }
 }

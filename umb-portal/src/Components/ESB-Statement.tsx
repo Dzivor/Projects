@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 import { LogOut } from "lucide-react";
 import {
   generateStatementPdf,
+  getBackendErrorMessage,
   lookupAccount,
   previewStatement,
   type StatementPreviewResponse,
@@ -13,8 +14,40 @@ import {
 import { logoutUser } from "../services/session";
 import PreviewChargesModal from "./PreviewChargesModal";
 
+const getWelcomeName = (): string => {
+  const authUserRaw = localStorage.getItem("authUser");
+
+  if (!authUserRaw) {
+    return "Guest";
+  }
+
+  try {
+    const authUser = JSON.parse(authUserRaw) as {
+      firstName?: string;
+      fullName?: string;
+    };
+
+    const firstName = authUser.firstName?.trim();
+
+    if (firstName) {
+      return firstName;
+    }
+
+    const fullName = authUser.fullName?.trim();
+
+    if (!fullName) {
+      return "Guest";
+    }
+
+    return fullName.split(/\s+/)[0] || "Guest";
+  } catch {
+    return "Guest";
+  }
+};
+
 const ESBStatement = () => {
   const formatGhsAmount = (amount: number) => `GHS ${amount.toFixed(2)}`;
+  const userName = getWelcomeName();
 
   const navigate = useNavigate();
   const [isPrintLoading, setIsPrintLoading] = useState(false);
@@ -75,13 +108,10 @@ const ESBStatement = () => {
         return;
       }
 
-      if (error instanceof AxiosError) {
-        setErrorMessage(
-          error.response?.data?.message ?? "Print failed. Please try again.",
-        );
-      } else {
-        setErrorMessage("Print failed. Please try again.");
-      }
+      setIsPreviewModalOpen(false);
+      setErrorMessage(
+        await getBackendErrorMessage(error, "Print failed. Please try again."),
+      );
     } finally {
       setIsPrintLoading(false);
     }
@@ -235,7 +265,7 @@ const ESBStatement = () => {
             ESB STATEMENT
           </h1>
           <h2 className="mt-4 text-lg font-medium text-slate-600 sm:text-xl">
-            Welcome to the ESB Statement Printing Portal
+            Welcome, {userName}.
           </h2>
           <p className="mt-2 text-sm leading-6 text-slate-500 sm:text-base">
             Enter the details to print your statement
