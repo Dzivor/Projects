@@ -1,26 +1,33 @@
 using System.DirectoryServices.AccountManagement;
 using System.IdentityModel.Tokens.Jwt;
+using System.Data.Common;
 using System.Security.Claims;
 using System.Text;
 using BankStatementAPI.DTOs;
+using BankStatementAPI.Data;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore;
 
 namespace BankStatementAPI.Services
 {
     public class AuthService
     {
         private readonly IConfiguration _config;
+        private readonly AppDbContext _context;
 
-        public AuthService(IConfiguration config)
+        public AuthService(IConfiguration config, AppDbContext context)
         {
             _config = config;
+            _context = context;
         }
 
         public LoginResponseDTO? Login(LoginRequestDTO request)
         {
+            string username = request.Username.Trim();
+
             // Step 1 — Validate against Active Directory
             var staffInfo = ValidateAgainstAD(
-                request.Username,
+                username,
                 request.Password
             );
 
@@ -28,7 +35,11 @@ namespace BankStatementAPI.Services
             if (staffInfo == null)
                 throw new UnauthorizedAccessException("Invalid username or password");
 
-            // Step 3 — Generate JWT token
+            // Step 3 — Make sure the user is registered in BankStatementDB.Users
+            if (!IsRegisteredUser(username))
+                throw new UnauthorizedAccessException("Invalid username or password");
+
+            // Step 4 — Generate JWT token
             string token = GenerateJwtToken(staffInfo);
 
             return new LoginResponseDTO
@@ -38,6 +49,41 @@ namespace BankStatementAPI.Services
                 FullName = staffInfo.FullName,
                 ExpiresAt = DateTime.Now.AddHours(8) // token valid for 8 hours
             };
+        }
+
+        private bool IsRegisteredUser(string username)
+        {
+            try
+            {
+                var connection = _context.Database.GetDbConnection();
+                bool shouldCloseConnection = connection.State != System.Data.ConnectionState.Open;
+
+                if (shouldCloseConnection)
+                    _context.Database.OpenConnection();
+
+                try
+                {
+                    using var command = connection.CreateCommand();
+                    command.CommandText =
+                        "SELECT TOP (1) 1 FROM [Users] WHERE [Username] = @username";
+
+                    DbParameter parameter = command.CreateParameter();
+                    parameter.ParameterName = "@username";
+                    parameter.Value = username;
+                    command.Parameters.Add(parameter);
+
+                    return command.ExecuteScalar() != null;
+                }
+                finally
+                {
+                    if (shouldCloseConnection)
+                        _context.Database.CloseConnection();
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private StaffInfo? ValidateAgainstAD(string username, string password)

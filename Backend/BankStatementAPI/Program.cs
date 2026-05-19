@@ -60,10 +60,11 @@ app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 
 //Register our custom auth middleware
-app.UseMiddleware<AuthMiddleware>();
+// app.UseMiddleware<AuthMiddleware>();
 
-app.UseAuthentication();
-app.UseAuthorization();
+// Temporary bypass: disable authentication and authorization pipeline checks for now.
+// app.UseAuthentication();
+// app.UseAuthorization();
 
 
 //map controllers
