@@ -151,6 +151,30 @@ namespace BankStatementAPI.Controllers
                 }
             );
 
+            // Determine which account will actually be charged
+            string accountToChargeNumber = request.ChargeAltAccount
+                ? (request.AltAccountNumber ?? string.Empty).Trim()
+                : statement.AccountNumber;
+
+            string accountToChargeName = statement.AccountName;
+            decimal accountToChargeBalance = statement.BookBalance;
+
+            if (request.ChargeAltAccount && !string.IsNullOrEmpty(accountToChargeNumber))
+            {
+                var acctLookup = await _bankApiService.GetAccountDetails(accountToChargeNumber, request.Channel);
+                if (acctLookup != null && acctLookup.Success && acctLookup.Account != null)
+                {
+                    accountToChargeName = acctLookup.Account.AccountName ?? accountToChargeNumber;
+                    accountToChargeBalance = acctLookup.Account.AccountBalance;
+                }
+                else
+                {
+                    // Fallback to showing the raw account number when lookup fails
+                    accountToChargeName = accountToChargeNumber;
+                    accountToChargeBalance = 0m;
+                }
+            }
+
             return Ok(new PreviewResponseDTO
             {
                 PreviewToken = previewToken,
@@ -167,7 +191,9 @@ namespace BankStatementAPI.Controllers
                 TotalDebitValue = statement.TotalDebitValue,
                 TotalCreditValue = statement.TotalCreditValue,
                 TotalDebitCount = statement.TotalDebitCount,
-                TotalCreditCount = statement.TotalCreditCount
+                TotalCreditCount = statement.TotalCreditCount,
+                AccountToChargeName = accountToChargeName,
+                AccountToChargeBalance = accountToChargeBalance
             });
         }
 

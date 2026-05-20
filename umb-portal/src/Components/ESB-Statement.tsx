@@ -12,6 +12,7 @@ import {
   type StatementRequest,
 } from "../services/statement";
 import { logoutUser } from "../services/session";
+import BackButton from "./BackButton";
 import PreviewChargesModal from "./PreviewChargesModal";
 
 const getWelcomeName = (): string => {
@@ -46,7 +47,6 @@ const getWelcomeName = (): string => {
 };
 
 const ESBStatement = () => {
-  const formatGhsAmount = (amount: number) => `GHS ${amount.toFixed(2)}`;
   const userName = getWelcomeName();
 
   const navigate = useNavigate();
@@ -57,9 +57,15 @@ const ESBStatement = () => {
   const [accountName, setAccountName] = useState("");
   const [previewResults, setPreviewResults] =
     useState<StatementPreviewResponse | null>(null);
+  const [previewErrorMessage, setPreviewErrorMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const latestLookupRequestIdRef = useRef(0);
   const lastResolvedAccountNumberRef = useRef("");
+  const lastPreviewValuesRef = useRef<{
+    accountNumber: string;
+    startDate: string;
+    endDate: string;
+  } | null>(null);
 
   const buildRequestPayload = (values: {
     accountNumber: string;
@@ -80,15 +86,38 @@ const ESBStatement = () => {
     };
   };
 
-  const handlePrint = async (values: {
+  const runPreview = async (values: {
     accountNumber: string;
     startDate: string;
     endDate: string;
   }) => {
+    lastPreviewValuesRef.current = values;
+    setPreviewErrorMessage("");
+    setPreviewResults(null);
+    setIsPreviewModalOpen(true);
+    setIsPreviewLoading(true);
+
+    try {
+      const payload = buildRequestPayload(values);
+      const response = await previewStatement(payload);
+      setPreviewResults(response);
+    } catch (error) {
+      if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
+        return;
+      }
+
+      setPreviewErrorMessage("Unable to load preview. Please try again.");
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  };
+
+  const handlePrint = async () => {
     setErrorMessage("");
     setIsPrintLoading(true);
 
     try {
+      const values = formik.values;
       const payload = {
         ...buildRequestPayload(values),
         previewToken: previewResults?.previewToken,
@@ -124,32 +153,7 @@ const ESBStatement = () => {
       endDate: "",
     },
     onSubmit: async (values) => {
-      setErrorMessage("");
-      setPreviewResults(null);
-      setIsPreviewModalOpen(false);
-      setIsPreviewLoading(true);
-
-      try {
-        const payload = buildRequestPayload(values);
-        const response = await previewStatement(payload);
-        setPreviewResults(response);
-        setIsPreviewModalOpen(true);
-      } catch (error) {
-        if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
-          return;
-        }
-
-        if (error instanceof AxiosError) {
-          setErrorMessage(
-            error.response?.data?.message ??
-              "Unable to preview statement. Please try again.",
-          );
-        } else {
-          setErrorMessage("Unable to preview statement.");
-        }
-      } finally {
-        setIsPreviewLoading(false);
-      }
+      void runPreview(values);
     },
   });
 
@@ -247,7 +251,11 @@ const ESBStatement = () => {
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f8fc]">
+    <main className="relative min-h-screen bg-[#f7f8fc]">
+      <div className="absolute left-6 top-6 z-10">
+        <BackButton />
+      </div>
+
       <div className="flex justify-end px-6 pt-6">
         <button
           type="button"
@@ -377,22 +385,25 @@ const ESBStatement = () => {
       <PreviewChargesModal
         isOpen={isPreviewModalOpen}
         title="Preview Charges"
-        message={
-          previewResults?.chargeMessage ??
-          "No charge applicable for ESB channel"
-        }
         accountNumber={
           previewResults?.accountNumber ?? formik.values.accountNumber
         }
         accountName={previewResults?.accountName ?? accountName}
-        numberOfPages={previewResults?.numberOfPages ?? 0}
-        totalChargeText={formatGhsAmount(previewResults?.totalCharge ?? 0)}
-        accountToCharge={previewResults?.accountToCharge}
+        previewData={previewResults}
+        channel="ESB"
+        waiveCharge={false}
+        isPreviewLoading={isPreviewLoading}
+        previewErrorMessage={previewErrorMessage}
         isPrinting={isPrintLoading}
         onPrint={() => {
-          void handlePrint(formik.values);
+          void handlePrint();
         }}
         onCancel={() => setIsPreviewModalOpen(false)}
+        onRetry={() => {
+          if (lastPreviewValuesRef.current) {
+            void runPreview(lastPreviewValuesRef.current);
+          }
+        }}
       />
     </main>
   );

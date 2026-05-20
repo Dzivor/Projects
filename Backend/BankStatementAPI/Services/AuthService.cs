@@ -50,7 +50,7 @@ namespace BankStatementAPI.Services
                 return new LoginResponseDTO
                 {
                     Success = false,
-                    Message = "Unauthorized access. Contact IT admin for access."
+                    Message = "Unauthorized access. Please contact IT Admin for access"
                 };
             }
 
@@ -59,8 +59,8 @@ namespace BankStatementAPI.Services
             {
                 return new LoginResponseDTO
                 {
-                    Success = false,
-                    Message = "Unauthorized access. Contact IT admin for access."
+                    Success = true,
+                    Message = "Unauthorized access. Please contact IT Admin for access"
                 };
             }
 

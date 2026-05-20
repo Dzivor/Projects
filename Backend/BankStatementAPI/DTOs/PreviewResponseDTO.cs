@@ -8,6 +8,11 @@ namespace BankStatementAPI.DTOs
         public string? AccountToCharge { get; set; }
         public string ChargeMessage { get; set; } = "";
 
+        // When the preview involves charging a (possibly different) account
+        // these fields describe the account that will be debited.
+        public string? AccountToChargeName { get; set; }
+        public decimal AccountToChargeBalance { get; set; }
+
         public string ResidentialAddress { get; set; } = "";
 
         // These come from the updated Statement model

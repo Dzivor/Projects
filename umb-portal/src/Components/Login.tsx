@@ -2,7 +2,7 @@ import { useFormik } from "formik";
 import { AxiosError } from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Lock, User } from "lucide-react";
+import { Lock, User, Eye, EyeOff } from "lucide-react";
 import bgPattern from "../assets/Astek Patern-02.png";
 import umbLogo from "../assets/umb-logo.jpg";
 import { login } from "../services/auth";
@@ -17,6 +17,7 @@ function Login() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   // Control the dev bypass explicitly with VITE_DEV_BYPASS (default: disabled)
   const isDevBypassEnabled = import.meta.env.VITE_DEV_BYPASS === "true";
 
@@ -39,7 +40,7 @@ function Login() {
           expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
         };
 
-        localStorage.setItem("authToken", devUser.token);
+        localStorage.setItem("authToken", devUser.token ?? "");
         localStorage.setItem("authUser", JSON.stringify(devUser));
 
         navigate("/welcome");
@@ -51,10 +52,10 @@ function Login() {
         const result = await login(values);
         const authUser = {
           ...result,
-          firstName: getFirstName(result.fullName),
+          firstName: getFirstName(result.fullName ?? ""),
         };
 
-        localStorage.setItem("authToken", result.token);
+        localStorage.setItem("authToken", result.token ?? "");
         localStorage.setItem("authUser", JSON.stringify(authUser));
 
         navigate("/welcome");
@@ -100,17 +101,25 @@ function Login() {
             />
           </label>
 
-          <label className="flex h-12 items-center gap-4 rounded-full border border-[#bcc2c7] bg-[#ececec] px-6">
+          <label className="flex h-12 items-center gap-4 rounded-full border border-[#bcc2c7] bg-[#ececec] px-4">
             <Lock size={15} className="text-[#697786]" />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               name="password"
               required
               placeholder="Password"
               value={formik.values.password}
               onChange={formik.handleChange}
-              className="w-full bg-transparent text-[20px] font-normal text-[#2f3f53] placeholder:text-[#2f3f53]/90 focus:outline-none"
+              className="flex-1 bg-transparent text-[20px] font-normal text-[#2f3f53] placeholder:text-[#2f3f53]/90 focus:outline-none"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="ml-2 flex h-8 w-8 items-center justify-center rounded-full text-[#697786] hover:bg-slate-200"
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
           </label>
 
           <button

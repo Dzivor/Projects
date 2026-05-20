@@ -27,6 +27,9 @@ type StatementPreviewResponse = {
   chargeMessage: string;
   accountName: string;
   accountNumber: string;
+  accountBalance: number;
+  accountToChargeName?: string;
+  accountToChargeBalance?: number;
 };
 
 type AccountLookupResponse = {

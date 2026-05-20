@@ -29,6 +29,17 @@ namespace BankStatementAPI.Data
             {
                 //Username being unique
                 entity.HasIndex(u => u.Username).IsUnique();
+
+                entity.HasData(new User
+                {
+                    Id = 1,
+                    Username = "Daniel.Dzivor",
+                    FullName = "Daniel Dzivor",
+                    Email = "Daniel.Dzivor@myumbbank.com",
+                    IsActive = true,
+                    CreatedAt = new DateTime(2026, 5, 20, 0, 0, 0, DateTimeKind.Utc),
+                    AddedBy = "Daniel"
+                });
             });
         }
     }

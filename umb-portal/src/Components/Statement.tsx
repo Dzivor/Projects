@@ -8,20 +8,21 @@ import {
   getBackendErrorMessage,
   lookupAccount,
   previewStatement,
+  type StatementPreviewResponse,
   type StatementRequest,
 } from "../services/statement";
 import { logoutUser } from "../services/session";
+import BackButton from "./BackButton";
 import PreviewChargesModal from "./PreviewChargesModal";
 import ErrorModal from "./ErrorModal";
 
-type StatementPreviewResponse = {
-  previewToken?: string;
-  numberOfPages: number;
-  totalCharge: number;
-  accountToCharge: string;
-  chargeMessage: string;
-  accountName: string;
+type VisaPreviewValues = {
   accountNumber: string;
+  startDate: string;
+  endDate: string;
+  chargeAccNumber: string;
+  chargeAltAccount: boolean;
+  waiveCharge: boolean;
 };
 
 const getWelcomeName = (): string => {
@@ -56,7 +57,6 @@ const getWelcomeName = (): string => {
 };
 
 const VisaStatement = () => {
-  const formatGhsAmount = (amount: number) => `GHS ${amount.toFixed(2)}`;
   const userName = getWelcomeName();
 
   const navigate = useNavigate();
@@ -68,11 +68,13 @@ const VisaStatement = () => {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [isPrintLoading, setIsPrintLoading] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [previewErrorMessage, setPreviewErrorMessage] = useState("");
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const chargeAccountInputRef = useRef<HTMLInputElement>(null);
   const latestLookupRequestIdRef = useRef(0);
   const lastResolvedAccountNumberRef = useRef("");
+  const lastPreviewValuesRef = useRef<VisaPreviewValues | null>(null);
 
   const buildRequestPayload = (values: {
     accountNumber: string;
@@ -97,6 +99,28 @@ const VisaStatement = () => {
         : undefined,
       staffUsername: authUser?.username ?? "SYSTEM",
     };
+  };
+
+  const runPreview = async (values: VisaPreviewValues) => {
+    lastPreviewValuesRef.current = values;
+    setPreviewErrorMessage("");
+    setPreviewResults(null);
+    setIsPreviewModalOpen(true);
+    setIsPreviewLoading(true);
+
+    try {
+      const payload = buildRequestPayload(values);
+      const response = await previewStatement(payload);
+      setPreviewResults(response);
+    } catch (error) {
+      if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
+        return;
+      }
+
+      setPreviewErrorMessage("Unable to load preview. Please try again.");
+    } finally {
+      setIsPreviewLoading(false);
+    }
   };
 
   const handlePrint = async () => {
@@ -144,42 +168,7 @@ const VisaStatement = () => {
       waiveCharge: false,
     },
     onSubmit: async (values) => {
-      setIsPreviewLoading(true);
-      setPreviewResults(null);
-      setIsPreviewModalOpen(false);
-
-      try {
-        const payload = buildRequestPayload(values);
-
-        const response = await previewStatement(payload);
-
-        // If waive charge is checked, set total charge to 0
-        const result = {
-          ...response,
-          totalCharge: values.waiveCharge ? 0 : response.totalCharge,
-        };
-
-        setPreviewResults(result);
-        setIsPreviewModalOpen(true);
-      } catch (error) {
-        if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
-          return;
-        }
-
-        if (error instanceof AxiosError) {
-          const msg =
-            error.response?.data?.message ??
-            "Unable to preview statement. Please try again.";
-          setErrorMessage(msg);
-          setIsErrorModalOpen(true);
-        } else {
-          const msg = "Unable to preview statement.";
-          setErrorMessage(msg);
-          setIsErrorModalOpen(true);
-        }
-      } finally {
-        setIsPreviewLoading(false);
-      }
+      void runPreview(values);
     },
   });
 
@@ -336,7 +325,11 @@ const VisaStatement = () => {
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f8fc]">
+    <main className="relative min-h-screen bg-[#f7f8fc]">
+      <div className="absolute left-6 top-6 z-10">
+        <BackButton />
+      </div>
+
       <div className="flex justify-end px-6 pt-6">
         <button
           type="button"
@@ -515,21 +508,23 @@ const VisaStatement = () => {
       <PreviewChargesModal
         isOpen={isPreviewModalOpen}
         title="Preview Charges"
-        message={previewResults?.chargeMessage ?? "Preview generated."}
         accountNumber={previewResults?.accountNumber ?? ""}
         accountName={previewResults?.accountName ?? ""}
-        numberOfPages={previewResults?.numberOfPages ?? 0}
-        totalChargeText={
-          formik.values.waiveCharge
-            ? `${formatGhsAmount(0)} (Waived)`
-            : formatGhsAmount(previewResults?.totalCharge ?? 0)
-        }
-        accountToCharge={previewResults?.accountToCharge}
+        previewData={previewResults}
+        channel="VISA"
+        waiveCharge={formik.values.waiveCharge}
+        isPreviewLoading={isPreviewLoading}
+        previewErrorMessage={previewErrorMessage}
         isPrinting={isPrintLoading}
         onPrint={() => {
           void handlePrint();
         }}
         onCancel={() => setIsPreviewModalOpen(false)}
+        onRetry={() => {
+          if (lastPreviewValuesRef.current) {
+            void runPreview(lastPreviewValuesRef.current);
+          }
+        }}
       />
 
       <ErrorModal

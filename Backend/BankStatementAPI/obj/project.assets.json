@@ -539,11 +539,11 @@
           }
         }
       },
-      "Microsoft.EntityFrameworkCore/10.0.6": {
+      "Microsoft.EntityFrameworkCore/10.0.8": {
         "type": "package",
         "dependencies": {
-          "Microsoft.EntityFrameworkCore.Abstractions": "10.0.6",
-          "Microsoft.EntityFrameworkCore.Analyzers": "10.0.6"
+          "Microsoft.EntityFrameworkCore.Abstractions": "10.0.8",
+          "Microsoft.EntityFrameworkCore.Analyzers": "10.0.8"
         },
         "compile": {
           "lib/net10.0/Microsoft.EntityFrameworkCore.dll": {
@@ -559,7 +559,7 @@
           "buildTransitive/net10.0/Microsoft.EntityFrameworkCore.props": {}
         }
       },
-      "Microsoft.EntityFrameworkCore.Abstractions/10.0.6": {
+      "Microsoft.EntityFrameworkCore.Abstractions/10.0.8": {
         "type": "package",
         "compile": {
           "lib/net10.0/Microsoft.EntityFrameworkCore.Abstractions.dll": {
@@ -572,10 +572,10 @@
           }
         }
       },
-      "Microsoft.EntityFrameworkCore.Analyzers/10.0.6": {
+      "Microsoft.EntityFrameworkCore.Analyzers/10.0.8": {
         "type": "package"
       },
-      "Microsoft.EntityFrameworkCore.Design/10.0.6": {
+      "Microsoft.EntityFrameworkCore.Design/10.0.8": {
         "type": "package",
         "dependencies": {
           "Humanizer.Core": "2.14.1",
@@ -583,8 +583,8 @@
           "Microsoft.CodeAnalysis.CSharp": "5.0.0",
           "Microsoft.CodeAnalysis.CSharp.Workspaces": "5.0.0",
           "Microsoft.CodeAnalysis.Workspaces.MSBuild": "5.0.0",
-          "Microsoft.EntityFrameworkCore.Relational": "10.0.6",
-          "Microsoft.Extensions.DependencyModel": "10.0.6",
+          "Microsoft.EntityFrameworkCore.Relational": "10.0.8",
+          "Microsoft.Extensions.DependencyModel": "10.0.8",
           "Mono.TextTemplating": "3.0.0",
           "Newtonsoft.Json": "13.0.3"
         },
@@ -602,10 +602,10 @@
           "build/net10.0/Microsoft.EntityFrameworkCore.Design.props": {}
         }
       },
-      "Microsoft.EntityFrameworkCore.Relational/10.0.6": {
+      "Microsoft.EntityFrameworkCore.Relational/10.0.8": {
         "type": "package",
         "dependencies": {
-          "Microsoft.EntityFrameworkCore": "10.0.6"
+          "Microsoft.EntityFrameworkCore": "10.0.8"
         },
         "compile": {
           "lib/net10.0/Microsoft.EntityFrameworkCore.Relational.dll": {
@@ -618,11 +618,11 @@
           }
         }
       },
-      "Microsoft.EntityFrameworkCore.SqlServer/10.0.6": {
+      "Microsoft.EntityFrameworkCore.SqlServer/10.0.8": {
         "type": "package",
         "dependencies": {
           "Microsoft.Data.SqlClient": "6.1.1",
-          "Microsoft.EntityFrameworkCore.Relational": "10.0.6"
+          "Microsoft.EntityFrameworkCore.Relational": "10.0.8"
         },
         "compile": {
           "lib/net10.0/Microsoft.EntityFrameworkCore.SqlServer.dll": {
@@ -635,7 +635,7 @@
           }
         }
       },
-      "Microsoft.EntityFrameworkCore.Tools/10.0.6": {
+      "Microsoft.EntityFrameworkCore.Tools/10.0.8": {
         "type": "package",
         "dependencies": {
           "Microsoft.EntityFrameworkCore.Design": "8.0.0"
@@ -658,7 +658,7 @@
           "buildMultiTargeting/Microsoft.Extensions.ApiDescription.Server.targets": {}
         }
       },
-      "Microsoft.Extensions.DependencyModel/10.0.6": {
+      "Microsoft.Extensions.DependencyModel/10.0.8": {
         "type": "package",
         "compile": {
           "lib/net10.0/_._": {
@@ -1228,10 +1228,10 @@
           "buildTransitive/net8.0/_._": {}
         }
       },
-      "System.Configuration.ConfigurationManager/10.0.6": {
+      "System.Configuration.ConfigurationManager/10.0.8": {
         "type": "package",
         "dependencies": {
-          "System.Security.Cryptography.ProtectedData": "10.0.6"
+          "System.Security.Cryptography.ProtectedData": "10.0.8"
         },
         "compile": {
           "lib/net10.0/System.Configuration.ConfigurationManager.dll": {
@@ -1247,7 +1247,7 @@
           "buildTransitive/net8.0/_._": {}
         }
       },
-      "System.DirectoryServices/10.0.6": {
+      "System.DirectoryServices/10.0.8": {
         "type": "package",
         "compile": {
           "lib/net10.0/System.DirectoryServices.dll": {
@@ -1269,12 +1269,12 @@
           }
         }
       },
-      "System.DirectoryServices.AccountManagement/10.0.6": {
+      "System.DirectoryServices.AccountManagement/10.0.8": {
         "type": "package",
         "dependencies": {
-          "System.Configuration.ConfigurationManager": "10.0.6",
-          "System.DirectoryServices": "10.0.6",
-          "System.DirectoryServices.Protocols": "10.0.6"
+          "System.Configuration.ConfigurationManager": "10.0.8",
+          "System.DirectoryServices": "10.0.8",
+          "System.DirectoryServices.Protocols": "10.0.8"
         },
         "compile": {
           "lib/net10.0/System.DirectoryServices.AccountManagement.dll": {
@@ -1296,7 +1296,7 @@
           }
         }
       },
-      "System.DirectoryServices.Protocols/10.0.6": {
+      "System.DirectoryServices.Protocols/10.0.8": {
         "type": "package",
         "compile": {
           "lib/net10.0/System.DirectoryServices.Protocols.dll": {
@@ -1381,7 +1381,7 @@
           }
         }
       },
-      "System.Security.Cryptography.ProtectedData/10.0.6": {
+      "System.Security.Cryptography.ProtectedData/10.0.8": {
         "type": "package",
         "compile": {
           "lib/net10.0/System.Security.Cryptography.ProtectedData.dll": {
@@ -2804,10 +2804,10 @@
         "runtimes/win-x86/native/Microsoft.Data.SqlClient.SNI.dll"
       ]
     },
-    "Microsoft.EntityFrameworkCore/10.0.6": {
-      "sha512": "eDy7bu3G+51FRC0cPtXTqUI9iAdDYl/XBQ5UguN8NFOA7QNmFvUEf36wA7PZ4ctsnxRN4t3dIvs2VKVE5H+EQQ==",
+    "Microsoft.EntityFrameworkCore/10.0.8": {
+      "sha512": "EJx+fIBMgBlgD+ublKCn+GTOJkw3UqV7xOjYWBRVdUYyIm8UfvAsmSOPFiIInsWTHyMEYUJ9gCJY1jwX+6UB7w==",
       "type": "package",
-      "path": "microsoft.entityframeworkcore/10.0.6",
+      "path": "microsoft.entityframeworkcore/10.0.8",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2816,14 +2816,14 @@
         "buildTransitive/net10.0/Microsoft.EntityFrameworkCore.props",
         "lib/net10.0/Microsoft.EntityFrameworkCore.dll",
         "lib/net10.0/Microsoft.EntityFrameworkCore.xml",
-        "microsoft.entityframeworkcore.10.0.6.nupkg.sha512",
+        "microsoft.entityframeworkcore.10.0.8.nupkg.sha512",
         "microsoft.entityframeworkcore.nuspec"
       ]
     },
-    "Microsoft.EntityFrameworkCore.Abstractions/10.0.6": {
-      "sha512": "4F+e6uxhVmyduu+Ve1INxek94adt4RAddWqykXNDnOOWQrJJ20izw/9qRpZdkLnIW9oj/3qnLWUtsv37U0xJCw==",
+    "Microsoft.EntityFrameworkCore.Abstractions/10.0.8": {
+      "sha512": "jbKDXWPZQhuPHygMnwzNOqxBADVcpRVytcKYZsA++QqhPkpF93Ta8o5mbJQGrARSjlkr9WtOaADV97EDMOZ7DA==",
       "type": "package",
-      "path": "microsoft.entityframeworkcore.abstractions/10.0.6",
+      "path": "microsoft.entityframeworkcore.abstractions/10.0.8",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2831,28 +2831,28 @@
         "PACKAGE.md",
         "lib/net10.0/Microsoft.EntityFrameworkCore.Abstractions.dll",
         "lib/net10.0/Microsoft.EntityFrameworkCore.Abstractions.xml",
-        "microsoft.entityframeworkcore.abstractions.10.0.6.nupkg.sha512",
+        "microsoft.entityframeworkcore.abstractions.10.0.8.nupkg.sha512",
         "microsoft.entityframeworkcore.abstractions.nuspec"
       ]
     },
-    "Microsoft.EntityFrameworkCore.Analyzers/10.0.6": {
-      "sha512": "PIcmALdKzeSJNWmxsLDsS8XKFqiH5+9GzIM+qd3w1efYIwmO0w5304i37/SkfynctHZwkiiQjb2mkoIXU1CGZg==",
+    "Microsoft.EntityFrameworkCore.Analyzers/10.0.8": {
+      "sha512": "M3BZ8JH8rB6BE7dO2g9iVbrHLnEz9wMXT6q+tDR6Nq3gyP3KmBj5OTiZGxyF3vesjOQNKanYoPGSNBR4kR2llg==",
       "type": "package",
-      "path": "microsoft.entityframeworkcore.analyzers/10.0.6",
+      "path": "microsoft.entityframeworkcore.analyzers/10.0.8",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
         "analyzers/dotnet/cs/Microsoft.EntityFrameworkCore.Analyzers.dll",
         "docs/PACKAGE.md",
-        "microsoft.entityframeworkcore.analyzers.10.0.6.nupkg.sha512",
+        "microsoft.entityframeworkcore.analyzers.10.0.8.nupkg.sha512",
         "microsoft.entityframeworkcore.analyzers.nuspec"
       ]
     },
-    "Microsoft.EntityFrameworkCore.Design/10.0.6": {
-      "sha512": "0lApALa4Ug14W7DXRk/vjc0fSi6h8OCAueKJH5MN6IU4mslMKiUaMKA7hzl+yFjym60dCOjhTWWa6S0ngl+Aog==",
+    "Microsoft.EntityFrameworkCore.Design/10.0.8": {
+      "sha512": "LlUUXdfqKFk7RlGExojVP8GI6hN9O21WjpxFnp5mLeGjd9iYdwywIgK9WOLvPM2hrknrRyHR/i43FQdw/oCrOw==",
       "type": "package",
-      "path": "microsoft.entityframeworkcore.design/10.0.6",
+      "path": "microsoft.entityframeworkcore.design/10.0.8",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2861,14 +2861,14 @@
         "build/net10.0/Microsoft.EntityFrameworkCore.Design.props",
         "lib/net10.0/Microsoft.EntityFrameworkCore.Design.dll",
         "lib/net10.0/Microsoft.EntityFrameworkCore.Design.xml",
-        "microsoft.entityframeworkcore.design.10.0.6.nupkg.sha512",
+        "microsoft.entityframeworkcore.design.10.0.8.nupkg.sha512",
         "microsoft.entityframeworkcore.design.nuspec"
       ]
     },
-    "Microsoft.EntityFrameworkCore.Relational/10.0.6": {
-      "sha512": "t+pXPUjiAemBTstY57yUAoywOO6znVD3lwy7UERJpji0wmS70XHg0h8EcpX6+7KT6ZVCIndr1pW0GdOobZ4yCg==",
+    "Microsoft.EntityFrameworkCore.Relational/10.0.8": {
+      "sha512": "UU3diAD2wwZveye2rnrwaF/wvJ9tm5iL2fuY9TTap6/iGQK1OO29M1BzXZRlRPVH/dByt5w/pISBSFtyR7hTqw==",
       "type": "package",
-      "path": "microsoft.entityframeworkcore.relational/10.0.6",
+      "path": "microsoft.entityframeworkcore.relational/10.0.8",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2876,14 +2876,14 @@
         "PACKAGE.md",
         "lib/net10.0/Microsoft.EntityFrameworkCore.Relational.dll",
         "lib/net10.0/Microsoft.EntityFrameworkCore.Relational.xml",
-        "microsoft.entityframeworkcore.relational.10.0.6.nupkg.sha512",
+        "microsoft.entityframeworkcore.relational.10.0.8.nupkg.sha512",
         "microsoft.entityframeworkcore.relational.nuspec"
       ]
     },
-    "Microsoft.EntityFrameworkCore.SqlServer/10.0.6": {
-      "sha512": "07TkaZNqIsbzY4IhPO5Puag3wzVlhL4uJ+5x4wNLgp/Teen8fWh3sPdL2+OaboFBTeNOTo5vxpH2N6n52iX8ow==",
+    "Microsoft.EntityFrameworkCore.SqlServer/10.0.8": {
+      "sha512": "A+FLIsTH9l5DG2iD6QW6Mfwlvr+BjWme/jJ2hvwmmENTr7lR1UWmgCtKCjDYcHxqdAD15bb4PgQnSzw12DV/pw==",
       "type": "package",
-      "path": "microsoft.entityframeworkcore.sqlserver/10.0.6",
+      "path": "microsoft.entityframeworkcore.sqlserver/10.0.8",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2891,14 +2891,14 @@
         "PACKAGE.md",
         "lib/net10.0/Microsoft.EntityFrameworkCore.SqlServer.dll",
         "lib/net10.0/Microsoft.EntityFrameworkCore.SqlServer.xml",
-        "microsoft.entityframeworkcore.sqlserver.10.0.6.nupkg.sha512",
+        "microsoft.entityframeworkcore.sqlserver.10.0.8.nupkg.sha512",
         "microsoft.entityframeworkcore.sqlserver.nuspec"
       ]
     },
-    "Microsoft.EntityFrameworkCore.Tools/10.0.6": {
-      "sha512": "KYHcG6LzOnK2ZbTGoMRUcJ+rl0eWGDVF3ZbanPuZ4Ar5r/Fg/zkakKyt4YZpN+jT2thysKN7G7dlrthsBj9yWw==",
+    "Microsoft.EntityFrameworkCore.Tools/10.0.8": {
+      "sha512": "bKtoSviiOUX75jM5bzSnBGPUjb2CfbBHdUDsjYv2X3/G3ZMMG18VpJMMAcP0tD8Xepu+wLl2soNJiWH6XxXWdQ==",
       "type": "package",
-      "path": "microsoft.entityframeworkcore.tools/10.0.6",
+      "path": "microsoft.entityframeworkcore.tools/10.0.8",
       "hasTools": true,
       "files": [
         ".nupkg.metadata",
@@ -2906,7 +2906,7 @@
         "Icon.png",
         "docs/PACKAGE.md",
         "lib/net8.0/_._",
-        "microsoft.entityframeworkcore.tools.10.0.6.nupkg.sha512",
+        "microsoft.entityframeworkcore.tools.10.0.8.nupkg.sha512",
         "microsoft.entityframeworkcore.tools.nuspec",
         "tools/EntityFrameworkCore.PS2.psd1",
         "tools/EntityFrameworkCore.PS2.psm1",
@@ -3181,10 +3181,10 @@
         "tools/net462/netstandard.dll"
       ]
     },
-    "Microsoft.Extensions.DependencyModel/10.0.6": {
-      "sha512": "xHMiq0J/wbyKDQ/tHB1FxylNWZLLlSf61Fw8XRneG6KTovjabNJiWtQoJ1MKCk71Bjr1TG1wAPVe8QZYphihLQ==",
+    "Microsoft.Extensions.DependencyModel/10.0.8": {
+      "sha512": "vLyZVpxmduO2jx+76ggqnsA3m81kwMY3NkWciNTj5E+Nvqb0VihqCvQP89QsGONWp0AJwMZG+u9GzaCjDdFGNw==",
       "type": "package",
-      "path": "microsoft.extensions.dependencymodel/10.0.6",
+      "path": "microsoft.extensions.dependencymodel/10.0.8",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -3205,7 +3205,7 @@
         "lib/net9.0/Microsoft.Extensions.DependencyModel.xml",
         "lib/netstandard2.0/Microsoft.Extensions.DependencyModel.dll",
         "lib/netstandard2.0/Microsoft.Extensions.DependencyModel.xml",
-        "microsoft.extensions.dependencymodel.10.0.6.nupkg.sha512",
+        "microsoft.extensions.dependencymodel.10.0.8.nupkg.sha512",
         "microsoft.extensions.dependencymodel.nuspec",
         "useSharedDesignerContext.txt"
       ]
@@ -3914,10 +3914,10 @@
         "useSharedDesignerContext.txt"
       ]
     },
-    "System.Configuration.ConfigurationManager/10.0.6": {
-      "sha512": "NQyzNGPPKUf5ykuPcUl1oKiY/gS+r9iASQmc8ITcwC6jBC20C9aFMIrBznpirpkoRev6I+p9n11u5QcqTfr+vg==",
+    "System.Configuration.ConfigurationManager/10.0.8": {
+      "sha512": "QG+HHwJjLyUiRuA9axr5pDqHAxboo7FXCTRakxMABE9CUAUij/tsd/MsgQPJUEppkf+YBLT+F/P/wKIVCAIcNg==",
       "type": "package",
-      "path": "system.configuration.configurationmanager/10.0.6",
+      "path": "system.configuration.configurationmanager/10.0.8",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -3938,15 +3938,15 @@
         "lib/net9.0/System.Configuration.ConfigurationManager.xml",
         "lib/netstandard2.0/System.Configuration.ConfigurationManager.dll",
         "lib/netstandard2.0/System.Configuration.ConfigurationManager.xml",
-        "system.configuration.configurationmanager.10.0.6.nupkg.sha512",
+        "system.configuration.configurationmanager.10.0.8.nupkg.sha512",
         "system.configuration.configurationmanager.nuspec",
         "useSharedDesignerContext.txt"
       ]
     },
-    "System.DirectoryServices/10.0.6": {
-      "sha512": "rZG61z4gDhv/uqT6Q1v6xGLB0IiuAdO9fr+WYDV/vPHKKVPozC+HxDqlewjNX7a3yAQK8sPjDtXWaNqMxFOMAw==",
+    "System.DirectoryServices/10.0.8": {
+      "sha512": "c3Smi0PEGS7QHgm/rHwMp8h1pNp4NeHCnUYuQ0MKYA9zekNZKFB2LGFstt18M4lwXVA2K2+fOAjqOlkfZinlFg==",
       "type": "package",
-      "path": "system.directoryservices/10.0.6",
+      "path": "system.directoryservices/10.0.8",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -3970,15 +3970,15 @@
         "runtimes/win/lib/net8.0/System.DirectoryServices.xml",
         "runtimes/win/lib/net9.0/System.DirectoryServices.dll",
         "runtimes/win/lib/net9.0/System.DirectoryServices.xml",
-        "system.directoryservices.10.0.6.nupkg.sha512",
+        "system.directoryservices.10.0.8.nupkg.sha512",
         "system.directoryservices.nuspec",
         "useSharedDesignerContext.txt"
       ]
     },
-    "System.DirectoryServices.AccountManagement/10.0.6": {
-      "sha512": "lxoQ5BDtCql9k4CWl7Jn/PUMNppIVcW88fbeBgskJWLJkoha7pXrbGA541eW+bxvy+BNrIT/75S/MfRAw6AKCg==",
+    "System.DirectoryServices.AccountManagement/10.0.8": {
+      "sha512": "WAfEB0RPzfxkTS1jt+rTC+XzjkzwRcKTqttgcQf0Bix4qomnbtU4iSEslXddz1wFA9vIB2HMaTW5IecpeywNBQ==",
       "type": "package",
-      "path": "system.directoryservices.accountmanagement/10.0.6",
+      "path": "system.directoryservices.accountmanagement/10.0.8",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -4002,15 +4002,15 @@
         "runtimes/win/lib/net8.0/System.DirectoryServices.AccountManagement.xml",
         "runtimes/win/lib/net9.0/System.DirectoryServices.AccountManagement.dll",
         "runtimes/win/lib/net9.0/System.DirectoryServices.AccountManagement.xml",
-        "system.directoryservices.accountmanagement.10.0.6.nupkg.sha512",
+        "system.directoryservices.accountmanagement.10.0.8.nupkg.sha512",
         "system.directoryservices.accountmanagement.nuspec",
         "useSharedDesignerContext.txt"
       ]
     },
-    "System.DirectoryServices.Protocols/10.0.6": {
-      "sha512": "c5eVFcFDnRBPraSvtDPLd1QzChXC57k4nBhYjeTxcdsOgG/NwYtFek9CB7/zz6jwDnOyNtm+rCL/paSVABRrQA==",
+    "System.DirectoryServices.Protocols/10.0.8": {
+      "sha512": "VmFO1CBCUvWu9cV2XQSeKXRW2Gn76oZmuhhOk7GPDIvzaPoy3lVWHFExFyKNNJlQbGySUbor1bqa1Fc8CJCF/A==",
       "type": "package",
-      "path": "system.directoryservices.protocols/10.0.6",
+      "path": "system.directoryservices.protocols/10.0.8",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -4046,7 +4046,7 @@
         "runtimes/win/lib/net8.0/System.DirectoryServices.Protocols.xml",
         "runtimes/win/lib/net9.0/System.DirectoryServices.Protocols.dll",
         "runtimes/win/lib/net9.0/System.DirectoryServices.Protocols.xml",
-        "system.directoryservices.protocols.10.0.6.nupkg.sha512",
+        "system.directoryservices.protocols.10.0.8.nupkg.sha512",
         "system.directoryservices.protocols.nuspec",
         "useSharedDesignerContext.txt"
       ]
@@ -4137,10 +4137,10 @@
         "useSharedDesignerContext.txt"
       ]
     },
-    "System.Security.Cryptography.ProtectedData/10.0.6": {
-      "sha512": "XsGj3pcZ4PIqz9Vhk7ymbL9iNQzOAnDzHmMBqK1rzjjfQBJ4AUZVJQWbDmTKUS8BIXX53QBDRrdiCpwdWfZM9A==",
+    "System.Security.Cryptography.ProtectedData/10.0.8": {
+      "sha512": "/ldVgSfImIBp6fLWS7sLH0BnmtFj0ZwGlZo4Xx2q0K3ZhJNDbW45kj2f6zPoC+L+BTINuHdMzTsopuwmkbgcNA==",
       "type": "package",
-      "path": "system.security.cryptography.protecteddata/10.0.6",
+      "path": "system.security.cryptography.protecteddata/10.0.8",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -4167,7 +4167,7 @@
         "lib/xamarinmac20/_._",
         "lib/xamarintvos10/_._",
         "lib/xamarinwatchos10/_._",
-        "system.security.cryptography.protecteddata.10.0.6.nupkg.sha512",
+        "system.security.cryptography.protecteddata.10.0.8.nupkg.sha512",
         "system.security.cryptography.protecteddata.nuspec",
         "useSharedDesignerContext.txt"
       ]
@@ -4321,14 +4321,14 @@
     "net10.0-windows": [
       "Microsoft.AspNetCore.Authentication.JwtBearer >= 10.0.6",
       "Microsoft.AspNetCore.OpenApi >= 10.0.5",
-      "Microsoft.EntityFrameworkCore >= 10.0.6",
-      "Microsoft.EntityFrameworkCore.Design >= 10.0.6",
-      "Microsoft.EntityFrameworkCore.SqlServer >= 10.0.6",
-      "Microsoft.EntityFrameworkCore.Tools >= 10.0.6",
+      "Microsoft.EntityFrameworkCore >= 10.0.8",
+      "Microsoft.EntityFrameworkCore.Design >= 10.0.8",
+      "Microsoft.EntityFrameworkCore.SqlServer >= 10.0.8",
+      "Microsoft.EntityFrameworkCore.Tools >= 10.0.8",
       "Microsoft.Extensions.Http.Polly >= 10.0.7",
       "QuestPDF >= 2026.2.4",
       "Swashbuckle.AspNetCore >= 10.1.7",
-      "System.DirectoryServices.AccountManagement >= 10.0.6",
+      "System.DirectoryServices.AccountManagement >= 10.0.8",
       "UglyToad.PdfPig >= 1.7.0-custom-5"
     ]
   },
@@ -4387,23 +4387,23 @@
           },
           "Microsoft.EntityFrameworkCore": {
             "target": "Package",
-            "version": "[10.0.6, )"
+            "version": "[10.0.8, )"
           },
           "Microsoft.EntityFrameworkCore.Design": {
             "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
             "suppressParent": "All",
             "target": "Package",
-            "version": "[10.0.6, )"
+            "version": "[10.0.8, )"
           },
           "Microsoft.EntityFrameworkCore.SqlServer": {
             "target": "Package",
-            "version": "[10.0.6, )"
+            "version": "[10.0.8, )"
           },
           "Microsoft.EntityFrameworkCore.Tools": {
             "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
             "suppressParent": "All",
             "target": "Package",
-            "version": "[10.0.6, )"
+            "version": "[10.0.8, )"
           },
           "Microsoft.Extensions.Http.Polly": {
             "target": "Package",
@@ -4419,7 +4419,7 @@
           },
           "System.DirectoryServices.AccountManagement": {
             "target": "Package",
-            "version": "[10.0.6, )"
+            "version": "[10.0.8, )"
           },
           "UglyToad.PdfPig": {
             "target": "Package",
