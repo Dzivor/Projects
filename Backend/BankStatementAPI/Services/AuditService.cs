@@ -2,8 +2,6 @@ using BankStatementAPI.Models;
 using BankStatementAPI.Data;
 using Microsoft.EntityFrameworkCore;
 
-
-
 namespace BankStatementAPI.Services
 {
     public class AuditService
@@ -15,32 +13,31 @@ namespace BankStatementAPI.Services
             _context = context;
         }
 
+        // Logs a statement generation to the database
         public async Task LogStatement(
-            string staffUsername,
-            string staffFullName,
+            int userId,
             string accountNumber,
             string accountHolderName,
             DateTime startDate,
             DateTime endDate,
             string channelUsed,
-            string staffId,
-            ChargingResult chargingResult
-            
-        )
+            ChargingResult chargingResult)
         {
             var log = new AuditLog
             {
-                StaffUsername = staffUsername,
-                StaffFullName = staffFullName,
-                StaffId = staffId,
+                UserId = userId,
                 AccountNumber = accountNumber,
                 AccountHolderName = accountHolderName,
+
+                // Convert DateTime to DateOnly
+                // since AuditLog uses DateOnly for dates
                 StartDate = DateOnly.FromDateTime(startDate),
                 EndDate = DateOnly.FromDateTime(endDate),
+
                 ChannelUsed = channelUsed,
                 NumberOfPages = chargingResult.NumberOfPages,
                 AmountCharged = chargingResult.TotalCharge,
-                AccountCharged = chargingResult.AccountCharged,
+                AccountCharged = chargingResult.AccountCharged ?? "",
                 WasWaived = chargingResult.Status == ChargeStatus.Waived,
                 GeneratedAt = DateTime.UtcNow
             };
@@ -48,11 +45,14 @@ namespace BankStatementAPI.Services
             _context.AuditLogs.Add(log);
             await _context.SaveChangesAsync();
         }
-        //Returning all audit logs
 
-       public async Task<List<AuditLog>> GetAllLogs()
+        // Returns all audit logs ordered by most recent first
+        public async Task<List<AuditLog>> GetAllLogs()
         {
-            return await _context.AuditLogs.OrderByDescending(l=>l.GeneratedAt).ToListAsync();
+            return await _context.AuditLogs
+                .Include(a => a.User)
+                .OrderByDescending(l => l.GeneratedAt)
+                .ToListAsync();
         }
     }
 }

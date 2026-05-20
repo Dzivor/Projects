@@ -8,7 +8,7 @@ namespace BankStatementAPI.DTOs
         public string FullName { get; set; } = "";
         public DateTime? ExpiresAt { get; set; }
 
-        public string Status { get; set; } = "";
+        public bool  Success { get; set; } 
 
         public string Message { get; set; } = "";
 

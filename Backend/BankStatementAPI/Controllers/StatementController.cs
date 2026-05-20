@@ -279,23 +279,15 @@ numberOfPages = fallbackPages;
                 pdfStopwatch.ElapsedMilliseconds,
                 request.AccountNumber);
 
-            string staffUsername = User.Identity?.Name ?? request.StaffUsername;
-            string staffFullName =
-                User.FindFirst(ClaimTypes.GivenName)?.Value ?? staffUsername;
-            string staffId =
-                User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? staffUsername;
-
             try
             {
                 await _auditService.LogStatement(
-                    staffUsername,
-                    staffFullName,
+                    request.UserId,
                     request.AccountNumber,
                     statement.AccountName,
                     startDate,
                     endDate,
                     request.Channel,
-                    staffId,
                     chargingResult
                 );
             }

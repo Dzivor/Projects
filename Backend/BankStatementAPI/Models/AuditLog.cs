@@ -6,11 +6,13 @@ namespace BankStatementAPI.Models
     {
         
         public int Id {get; set;}
-        public string StaffUsername{get; set;}="";
-        public string StaffId{get; set;}="";
-        public string StaffFullName {get; set;}="";
-
         
+        
+        // Foreign key- links to Users table
+        public int UserId {get; set;}
+        public User? User {get; set;} 
+
+        //Request details
         public string AccountNumber {get; set;}="";
         public string AccountHolderName{get; set;}="";
         public DateOnly StartDate {get; set;}
@@ -24,14 +26,7 @@ namespace BankStatementAPI.Models
         public string AccountCharged {get; set;} = "";
         public bool WasWaived {get; set;}
 
-
-
-       
-
-        public string? BankTransactionReference {get;set;}
-        public bool WasReversed {get; set;}
-
-        public string? ReversalReason {get; set;}
+    
 
  //Timestamp
         public DateTime GeneratedAt {get; set;}=DateTime.UtcNow;

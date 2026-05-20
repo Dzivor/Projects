@@ -17,37 +17,26 @@ namespace BankStatementAPI.Controllers
 
         // POST /api/auth/login
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequestDTO request)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)
         {
-            // Validate inputs
+            // Validate inputs before hitting AD or database
             if (string.IsNullOrEmpty(request.Username) ||
                 string.IsNullOrEmpty(request.Password))
             {
-                return BadRequest(new
+                return Ok(new LoginResponseDTO
                 {
-                    message = "Username and password are required"
+                    Success = false,
+                    Message = "Username and password are required"
                 });
             }
 
-            try
-            {
-                var result = _authService.Login(request);
+            // Login always returns a LoginResponseDTO
+            // never throws — all errors handled inside AuthService
+            var result = await _authService.Login(request);
 
-                if (result == null)
-                {
-                    return Unauthorized(new { message = "Invalid username or password" });
-                }
-
-                return Ok(result);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Unauthorized(new { message = "Invalid username or password" });
-            }
-            catch
-            {
-                return StatusCode(500, new { message = "An error occurred while processing the login." });
-            }
+            // Always return 200 — frontend reads Success field
+            // to determine what to do next
+            return Ok(result);
         }
     }
 }
