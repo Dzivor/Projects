@@ -36,7 +36,7 @@ namespace BankStatementAPI.Services
                 Token = token,
                 Username = staffInfo.Username,
                 FullName = staffInfo.FullName,
-                ExpiresAt = DateTime.Now.AddHours(8) // token valid for 8 hours
+                ExpiresAt = DateTime.Now.AddMinutes(30) // token valid for 30 minutes
             };
         }
 
@@ -111,7 +111,7 @@ namespace BankStatementAPI.Services
                 issuer: jwtIssuer,
                 audience: jwtIssuer,
                 claims: claims,
-                expires: DateTime.Now.AddHours(8),
+                expires: DateTime.Now.AddMinutes(30), // token valid for 30 minutes
                 signingCredentials: credentials
             );
 

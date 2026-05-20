@@ -299,8 +299,10 @@ numberOfPages = fallbackPages;
                     chargingResult
                 );
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to log audit statement for account {AccountNumber}", 
+                    request.AccountNumber);
                 // Keep statement generation successful even if audit insert fails.
             }
 

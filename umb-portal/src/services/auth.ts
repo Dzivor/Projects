@@ -13,10 +13,13 @@ export type LoginRequest = {
 };
 
 export type LoginResponse = {
-  token: string;
-  username: string;
-  fullName: string;
-  expiresAt: string;
+  success: boolean;
+  token?: string;
+  username?: string;
+  fullName?: string;
+  userId?: string;
+  expiresAt?: string;
+  message?: string;
 };
 
 export const login = async (payload: LoginRequest): Promise<LoginResponse> => {
