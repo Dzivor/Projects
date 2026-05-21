@@ -1,5 +1,5 @@
 import { useFormik } from "formik";
-import { AxiosError } from "axios";
+
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Lock, User, Eye, EyeOff } from "lucide-react";
@@ -18,7 +18,7 @@ function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  // Control the dev bypass explicitly with VITE_DEV_BYPASS (default: disabled)
+
   const isDevBypassEnabled = import.meta.env.VITE_DEV_BYPASS === "true";
 
   const formik = useFormik({
@@ -39,10 +39,8 @@ function Login() {
           firstName: "Developer",
           expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
         };
-
-        localStorage.setItem("authToken", devUser.token ?? "");
+        localStorage.setItem("authToken", devUser.token);
         localStorage.setItem("authUser", JSON.stringify(devUser));
-
         navigate("/welcome");
         setIsSubmitting(false);
         return;
@@ -50,26 +48,30 @@ function Login() {
       ///////////////////////////////////////////////////////////
       try {
         const result = await login(values);
+
         if (!result.success) {
-          setErrorMessage(result.message ?? "Login failed. Please try again.");
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("authUser");
+          // Message always comes from the backend now
+          setErrorMessage(result.message ?? "Login failed.");
           return;
         }
+
+        if (!result.token) {
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("authUser");
+          setErrorMessage("Login failed. Please try again.");
+          return;
+        }
+
         const authUser = {
           ...result,
           firstName: getFirstName(result.fullName ?? ""),
         };
 
-        localStorage.setItem("authToken", result.token ?? "");
+        localStorage.setItem("authToken", result.token);
         localStorage.setItem("authUser", JSON.stringify(authUser));
-
         navigate("/welcome");
-      } catch (error) {
-        if (error instanceof AxiosError) {
-          const apiMessage = error.response?.data?.message;
-          setErrorMessage(apiMessage ?? "Login failed. Please try again.");
-        } else {
-          setErrorMessage("Login failed. Please try again.");
-        }
       } finally {
         setIsSubmitting(false);
       }

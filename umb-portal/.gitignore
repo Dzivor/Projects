@@ -3,3 +3,5 @@ dist/
 build/
 .env
 Pictures/
+publish/
+*.env.production

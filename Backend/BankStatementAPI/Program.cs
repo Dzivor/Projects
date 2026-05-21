@@ -14,8 +14,6 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.PropertyNamingPolicy =
             System.Text.Json.JsonNamingPolicy.CamelCase;
-        options.JsonSerializerOptions.DefaultIgnoreCondition =
-            System.Text.Json.Serialization.JsonIgnoreCondition.Never;
     });
 
 //Swagger 
@@ -62,7 +60,7 @@ builder.Services.AddCors(options =>
 
 var app= builder.Build();
 
-//swagger in development environment only
+//swagger 
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
@@ -78,13 +76,19 @@ if (app.Environment.IsDevelopment())
 
     app.UseSwagger();
     app.UseSwaggerUI();
-}
 
+}
 //CORS
 
 app.UseCors("AllowFrontend");
 
-app.UseHttpsRedirection();
+var enableHttpsRedirection = builder.Configuration.GetValue<bool?>("UseHttpsRedirection")
+    ?? !app.Environment.IsProduction();
+
+if (enableHttpsRedirection)
+{
+    app.UseHttpsRedirection();
+}
 
 
 

@@ -20,6 +20,13 @@ namespace BankStatementAPI.Middleware
         {
             string path = context.Request.Path.Value ?? "";
 
+            // Let CORS preflight pass through without authentication.
+            if (HttpMethods.IsOptions(context.Request.Method))
+            {
+                await _next(context);
+                return;
+            }
+
             if (path.Contains("/api/auth/login", StringComparison.OrdinalIgnoreCase))
             {
                 await _next(context);

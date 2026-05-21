@@ -22,7 +22,7 @@ namespace BankStatementAPI.Services
 
         public async Task<LoginResponseDTO> Login(LoginRequestDTO request)
         {
-           // Strip domain prefix before doing anything
+            // Strip domain prefix before doing anything
             // Handles: "mbg\daniel.dzivor" or "daniel.dzivor@mbg.local"
             string cleanUsername = request.Username.Trim();
 
@@ -32,63 +32,37 @@ namespace BankStatementAPI.Services
             if (cleanUsername.Contains("@"))
                 cleanUsername = cleanUsername.Split('@').First();
 
-
             // Step 1 — Validate against Active Directory
-            StaffInfo? staffInfo = ValidateAgainstAD(
-                cleanUsername, 
-                request.Password
-            );
+            StaffInfo? staffInfo = ValidateAgainstAD(cleanUsername, request.Password);
 
             // Step 2 — AD validation failed
             if (staffInfo is null)
-            {
                 return new LoginResponseDTO
                 {
                     Success = false,
-                    Message = "Invalid username or password"
+                    Message = "Invalid username or password."
                 };
-            }
 
-            /* Step 3 — Check Users table
+            // Step 3 — Check Users table
             var user = await _context.Users
                 .FirstOrDefaultAsync(u =>
                     EF.Functions.Like(u.Username, cleanUsername));
 
-                    */
-
-
-
-                    // Step 3 — Check Users table
-Console.WriteLine($"Looking for username: '{cleanUsername}'");
-
-var allUsers = await _context.Users.ToListAsync();
-Console.WriteLine($"Users in table: {string.Join(", ", allUsers.Select(u => $"'{u.Username}'"))}");
-
-var user = await _context.Users
-    .FirstOrDefaultAsync(u =>
-        u.Username.ToLower() == cleanUsername.ToLower());
-
-Console.WriteLine($"User found: {user?.Username ?? "NULL"}");
-
             // Step 4 — Not in Users table
             if (user is null)
-            {
                 return new LoginResponseDTO
                 {
                     Success = false,
-                    Message = "Unauthorized access. Please contact IT Admin for access"
+                    Message = "Access denied. Please contact IT Admin."
                 };
-            }
 
-            // Step 5 — In table but disabled
+            // Step 5 — Account disabled
             if (!user.IsActive)
-            {
                 return new LoginResponseDTO
                 {
                     Success = false,
-                    Message = "Unauthorized access. Please contact IT Admin for access"
+                    Message = "Your account has been disabled. Please contact IT Admin."
                 };
-            }
 
             // Step 6 — Authorized — generate token
             string token = GenerateJwtToken(staffInfo, user.Id);
@@ -96,6 +70,7 @@ Console.WriteLine($"User found: {user?.Username ?? "NULL"}");
             return new LoginResponseDTO
             {
                 Success = true,
+                Message = "Login successful.",
                 Token = token,
                 Username = user.Username,
                 FullName = user.FullName,
@@ -110,10 +85,7 @@ Console.WriteLine($"User found: {user?.Username ?? "NULL"}");
             {
                 string domain = _config["ActiveDirectory:Domain"]!;
 
-                using var context = new PrincipalContext(
-                    ContextType.Domain,
-                    domain
-                );
+                using var context = new PrincipalContext(ContextType.Domain, domain);
 
                 bool isValid = context.ValidateCredentials(username, password);
 
@@ -152,20 +124,15 @@ Console.WriteLine($"User found: {user?.Username ?? "NULL"}");
                 new Claim(ClaimTypes.Name, staff.Username),
                 new Claim(ClaimTypes.GivenName, staff.FullName),
                 new Claim(ClaimTypes.Email, staff.Email),
-                // Store userId in token so controllers can access it
                 new Claim("userId", userId.ToString()),
-                new Claim(JwtRegisteredClaimNames.Jti,
-                    Guid.NewGuid().ToString())
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
             var key = new SymmetricSecurityKey(
                 System.Text.Encoding.UTF8.GetBytes(jwtKey)
             );
 
-            var credentials = new SigningCredentials(
-                key,
-                SecurityAlgorithms.HmacSha256
-            );
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
                 issuer: jwtIssuer,
@@ -179,11 +146,6 @@ Console.WriteLine($"User found: {user?.Username ?? "NULL"}");
         }
     }
 
-    // ─────────────────────────────────────────
-    // StaffInfo — internal class
-    // Holds AD user details temporarily
-    // during the login process
-    // ─────────────────────────────────────────
     public class StaffInfo
     {
         public string Username { get; set; } = "";
