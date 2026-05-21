@@ -17,7 +17,7 @@ export type LoginResponse = {
   token?: string;
   username?: string;
   fullName?: string;
-  userId?: string;
+  userId?: number;
   expiresAt?: string;
   message?: string;
 };

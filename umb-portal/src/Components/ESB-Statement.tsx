@@ -267,19 +267,17 @@ const ESBStatement = () => {
         </button>
       </div>
 
-      <section className="flex justify-center px-4 pt-6">
-        <div className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white/90 px-6 py-8 text-center shadow-sm backdrop-blur-sm sm:px-10 sm:py-10">
-          <h1 className="text-3xl font-semibold tracking-[0.18em] text-slate-900 sm:text-4xl">
-            ESB STATEMENT
-          </h1>
-          <h2 className="mt-4 text-lg font-medium text-slate-600 sm:text-xl">
-            Welcome, {userName}.
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-500 sm:text-base">
-            Enter the details to print your statement
-          </p>
-        </div>
-      </section>
+      <div className="text-center py-8 px-4">
+        <h1 className="text-3xl font-semibold tracking-[0.18em] text-slate-900 sm:text-4xl">
+          ESB STATEMENT
+        </h1>
+        <h2 className="mt-3 text-lg font-medium text-slate-600 sm:text-xl">
+          Welcome, {userName}.
+        </h2>
+        <p className="mt-1 text-sm leading-6 text-slate-500 sm:text-base">
+          Enter the details to print your statement
+        </p>
+      </div>
 
       <div className="flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">

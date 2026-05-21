@@ -1,7 +1,6 @@
 using System.DirectoryServices.AccountManagement;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 using BankStatementAPI.Data;
 using BankStatementAPI.DTOs;
 using BankStatementAPI.Models;
@@ -23,9 +22,20 @@ namespace BankStatementAPI.Services
 
         public async Task<LoginResponseDTO> Login(LoginRequestDTO request)
         {
+           // Strip domain prefix before doing anything
+            // Handles: "mbg\daniel.dzivor" or "daniel.dzivor@mbg.local"
+            string cleanUsername = request.Username.Trim();
+
+            if (cleanUsername.Contains("\\"))
+                cleanUsername = cleanUsername.Split('\\').Last();
+
+            if (cleanUsername.Contains("@"))
+                cleanUsername = cleanUsername.Split('@').First();
+
+
             // Step 1 — Validate against Active Directory
             StaffInfo? staffInfo = ValidateAgainstAD(
-                request.Username,
+                cleanUsername, 
                 request.Password
             );
 
@@ -39,10 +49,26 @@ namespace BankStatementAPI.Services
                 };
             }
 
-            // Step 3 — Check Users table
+            /* Step 3 — Check Users table
             var user = await _context.Users
                 .FirstOrDefaultAsync(u =>
-                    u.Username.ToLower() == request.Username.ToLower());
+                    EF.Functions.Like(u.Username, cleanUsername));
+
+                    */
+
+
+
+                    // Step 3 — Check Users table
+Console.WriteLine($"Looking for username: '{cleanUsername}'");
+
+var allUsers = await _context.Users.ToListAsync();
+Console.WriteLine($"Users in table: {string.Join(", ", allUsers.Select(u => $"'{u.Username}'"))}");
+
+var user = await _context.Users
+    .FirstOrDefaultAsync(u =>
+        u.Username.ToLower() == cleanUsername.ToLower());
+
+Console.WriteLine($"User found: {user?.Username ?? "NULL"}");
 
             // Step 4 — Not in Users table
             if (user is null)
@@ -59,7 +85,7 @@ namespace BankStatementAPI.Services
             {
                 return new LoginResponseDTO
                 {
-                    Success = true,
+                    Success = false,
                     Message = "Unauthorized access. Please contact IT Admin for access"
                 };
             }

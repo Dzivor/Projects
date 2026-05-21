@@ -205,6 +205,13 @@ namespace BankStatementAPI.Controllers
         {
             var totalStopwatch = Stopwatch.StartNew();
 
+             // Extract UserId from JWT claims — never trust the frontend for identity
+    var userIdClaim = User.FindFirstValue("userId");
+    if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+    {
+        return Unauthorized(new { message = "Invalid token. Please login again." });
+    }
+
             // Step 1 — Validate request
             var validation = ValidateRequest(request);
             if (validation != null) return validation;
@@ -305,10 +312,12 @@ numberOfPages = fallbackPages;
                 pdfStopwatch.ElapsedMilliseconds,
                 request.AccountNumber);
 
+
+
             try
             {
                 await _auditService.LogStatement(
-                    request.UserId,
+                    userId,
                     request.AccountNumber,
                     statement.AccountName,
                     startDate,

@@ -50,6 +50,10 @@ function Login() {
       ///////////////////////////////////////////////////////////
       try {
         const result = await login(values);
+        if (!result.success) {
+          setErrorMessage(result.message ?? "Login failed. Please try again.");
+          return;
+        }
         const authUser = {
           ...result,
           firstName: getFirstName(result.fullName ?? ""),

@@ -20,7 +20,7 @@ namespace BankStatementAPI.Middleware
         {
             string path = context.Request.Path.Value ?? "";
 
-            if (path.Contains("/api/auth/login"))
+            if (path.Contains("/api/auth/login", StringComparison.OrdinalIgnoreCase))
             {
                 await _next(context);
                 return;

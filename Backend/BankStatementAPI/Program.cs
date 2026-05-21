@@ -8,8 +8,15 @@ var builder  = WebApplication.CreateBuilder(args);
 //Registering services
 
 //controller support
-builder.Services.AddControllers();
-
+//builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy =
+            System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DefaultIgnoreCondition =
+            System.Text.Json.Serialization.JsonIgnoreCondition.Never;
+    });
 
 //Swagger 
 builder.Services.AddEndpointsApiExplorer();
