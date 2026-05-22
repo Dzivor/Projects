@@ -15,7 +15,6 @@ namespace BankStatementAPI.Controllers
             _authService = authService;
         }
 
-        // POST /api/auth/login
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)
         {
@@ -23,24 +22,30 @@ namespace BankStatementAPI.Controllers
             if (string.IsNullOrEmpty(request.Username) ||
                 string.IsNullOrEmpty(request.Password))
             {
-                return BadRequest(new LoginResponseDTO
+                return Ok(new LoginResponseDTO
                 {
                     Success = false,
                     Message = "Username and password are required."
                 });
             }
 
-            var result = await _authService.Login(request);
+            try
+            {
+                var result = await _authService.Login(request);
 
-            // Return proper HTTP status codes
-            if (!result.Success)
-                return Unauthorized(new LoginResponseDTO
+                // Always return 200
+                // Frontend reads result.Success to determine what to do
+                return Ok(result);
+            }
+            catch (Exception)
+            {
+                // Log the exception here when Serilog is added
+                return Ok(new LoginResponseDTO
                 {
                     Success = false,
-                    Message = result.Message
+                    Message = "An error occurred. Please try again."
                 });
-
-            return Ok(result);
+            }
         }
     }
 }

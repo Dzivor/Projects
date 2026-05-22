@@ -1,5 +1,4 @@
 import { useFormik } from "formik";
-
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Lock, User, Eye, EyeOff } from "lucide-react";
@@ -9,7 +8,6 @@ import { login } from "../services/auth";
 
 const getFirstName = (fullName: string): string => {
   const firstName = fullName.trim().split(/\s+/)[0];
-
   return firstName || "Guest";
 };
 
@@ -29,8 +27,8 @@ function Login() {
     onSubmit: async (values) => {
       setErrorMessage("");
       setIsSubmitting(true);
-      // In development mode, bypass actual login for faster testing
 
+      // Dev bypass
       if (isDevBypassEnabled) {
         const devUser = {
           token: "dev-bypass-token",
@@ -45,34 +43,34 @@ function Login() {
         setIsSubmitting(false);
         return;
       }
-      ///////////////////////////////////////////////////////////
+
       try {
         const result = await login(values);
 
-        if (!result.success) {
+        // Use if/else instead of return
+        // so finally always runs correctly
+        if (!result.success || !result.token) {
+          // Any failure — show message and clear storage
           localStorage.removeItem("authToken");
           localStorage.removeItem("authUser");
-          // Message always comes from the backend now
-          setErrorMessage(result.message ?? "Login failed.");
-          return;
+          setErrorMessage(result.message ?? "Login failed. Please try again.");
+        } else {
+          // Success — store auth data and navigate
+          const authUser = {
+            ...result,
+            firstName: getFirstName(result.fullName ?? ""),
+          };
+          localStorage.setItem("authToken", result.token);
+          localStorage.setItem("authUser", JSON.stringify(authUser));
+          navigate("/welcome");
         }
-
-        if (!result.token) {
-          localStorage.removeItem("authToken");
-          localStorage.removeItem("authUser");
-          setErrorMessage("Login failed. Please try again.");
-          return;
-        }
-
-        const authUser = {
-          ...result,
-          firstName: getFirstName(result.fullName ?? ""),
-        };
-
-        localStorage.setItem("authToken", result.token);
-        localStorage.setItem("authUser", JSON.stringify(authUser));
-        navigate("/welcome");
+      } catch {
+        // Only for genuine network failures
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("authUser");
+        setErrorMessage("Unable to reach server. Please try again later.");
       } finally {
+        // Always runs — button always re-enabled
         setIsSubmitting(false);
       }
     },

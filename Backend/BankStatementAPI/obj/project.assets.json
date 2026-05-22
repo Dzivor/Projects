@@ -1,7 +1,7 @@
 {
-  "version": 4,
+  "version": 3,
   "targets": {
-    "net10.0-windows": {
+    "net10.0-windows7.0": {
       "Azure.Core/1.47.1": {
         "type": "package",
         "dependencies": {
@@ -4318,7 +4318,7 @@
     }
   },
   "projectFileDependencyGroups": {
-    "net10.0-windows": [
+    "net10.0-windows7.0": [
       "Microsoft.AspNetCore.Authentication.JwtBearer >= 10.0.8",
       "Microsoft.AspNetCore.OpenApi >= 10.0.5",
       "Microsoft.EntityFrameworkCore >= 10.0.8",
@@ -4339,11 +4339,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\daniel.dzivor\\Projects\\Backend\\BankStatementAPI\\BankStatementAPI.csproj",
+      "projectUniqueName": "C:\\Projects\\Backend\\BankStatementAPI\\BankStatementAPI.csproj",
       "projectName": "BankStatementAPI",
-      "projectPath": "C:\\Users\\daniel.dzivor\\Projects\\Backend\\BankStatementAPI\\BankStatementAPI.csproj",
+      "projectPath": "C:\\Projects\\Backend\\BankStatementAPI\\BankStatementAPI.csproj",
       "packagesPath": "C:\\Users\\daniel.dzivor\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\daniel.dzivor\\Projects\\Backend\\BankStatementAPI\\obj\\",
+      "outputPath": "C:\\Projects\\Backend\\BankStatementAPI\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\daniel.dzivor\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -4355,8 +4355,7 @@
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
-        "net10.0-windows": {
-          "framework": "net10.0-windows7.0",
+        "net10.0-windows7.0": {
           "targetAlias": "net10.0-windows",
           "projectReferences": {}
         }
@@ -4371,11 +4370,10 @@
         "auditLevel": "low",
         "auditMode": "all"
       },
-      "SdkAnalysisLevel": "10.0.300"
+      "SdkAnalysisLevel": "10.0.200"
     },
     "frameworks": {
-      "net10.0-windows": {
-        "framework": "net10.0-windows7.0",
+      "net10.0-windows7.0": {
         "targetAlias": "net10.0-windows",
         "dependencies": {
           "Microsoft.AspNetCore.Authentication.JwtBearer": {
@@ -4450,7 +4448,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.AspNetCore": "(,10.0.32767]",
           "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

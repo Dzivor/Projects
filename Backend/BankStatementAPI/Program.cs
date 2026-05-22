@@ -27,8 +27,10 @@ builder.Services.AddMemoryCache();
 
 
 //Database context
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddDbContext<AppDbContext>((DbContextOptionsBuilder options) =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
 
 
 //custom services
