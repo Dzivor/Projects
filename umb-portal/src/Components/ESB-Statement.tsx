@@ -390,6 +390,7 @@ const ESBStatement = () => {
         previewData={previewResults}
         channel="ESB"
         waiveCharge={false}
+        chargeAltAccount={false}
         isPreviewLoading={isPreviewLoading}
         previewErrorMessage={previewErrorMessage}
         isPrinting={isPrintLoading}

@@ -9,7 +9,8 @@ type StatementPreviewData = {
   chargeMessage: string;
   accountName: string;
   accountNumber: string;
-  accountBalance: number;
+  bookBalance?: number;
+  accountBalance?: number;
   accountToChargeName?: string;
   accountToChargeBalance?: number;
 };
@@ -22,6 +23,7 @@ type PreviewChargesModalProps = {
   previewData: StatementPreviewData | null;
   channel: StatementChannel;
   waiveCharge: boolean;
+  chargeAltAccount: boolean;
   isPreviewLoading: boolean;
   previewErrorMessage: string;
   isPrinting: boolean;
@@ -31,6 +33,11 @@ type PreviewChargesModalProps = {
 };
 
 const formatGhsAmount = (amount: number) => `GHS ${amount.toFixed(2)}`;
+const toNumber = (value: number | string | null | undefined): number => {
+  const normalizedValue = Number(value ?? 0);
+
+  return Number.isFinite(normalizedValue) ? normalizedValue : 0;
+};
 
 const PreviewChargesModal = ({
   isOpen,
@@ -40,6 +47,7 @@ const PreviewChargesModal = ({
   previewData,
   channel,
   waiveCharge,
+  chargeAltAccount,
   isPreviewLoading,
   previewErrorMessage,
   isPrinting,
@@ -51,14 +59,23 @@ const PreviewChargesModal = ({
     ? previewData.accountToCharge.replace(/^\s*GHS\s*/i, "").trim()
     : "";
 
-  const totalCharge = previewData?.totalCharge ?? 0;
-  const accountBalance = previewData?.accountBalance ?? 0;
+  const totalCharge = toNumber(previewData?.totalCharge);
+  const primaryAccountBalance = toNumber(
+    previewData?.bookBalance ?? previewData?.accountBalance,
+  );
+  const accountToChargeBalance = toNumber(previewData?.accountToChargeBalance);
+  const accountToChargeName =
+    previewData?.accountToChargeName ??
+    (displayAccountToCharge || "Account to charge");
+  const balanceToCompare = chargeAltAccount
+    ? accountToChargeBalance
+    : primaryAccountBalance;
   const insufficientFunds =
     !isPreviewLoading &&
     !previewErrorMessage &&
     channel === "VISA" &&
     !waiveCharge &&
-    accountBalance < totalCharge;
+    balanceToCompare < totalCharge;
 
   const chargeMessage = (() => {
     if (previewErrorMessage) {
@@ -73,7 +90,15 @@ const PreviewChargesModal = ({
       return "Charge has been waived";
     }
 
-    return `Account balance: ${formatGhsAmount(accountBalance)}. Charge: ${formatGhsAmount(totalCharge)}`;
+    if (insufficientFunds) {
+      return `Insufficient balance. Account balance: ${formatGhsAmount(balanceToCompare)}`;
+    }
+
+    if (chargeAltAccount) {
+      return `Account to charge: ${accountToChargeName}. Balance: ${formatGhsAmount(accountToChargeBalance)}`;
+    }
+
+    return `Account balance: ${formatGhsAmount(primaryAccountBalance)}`;
   })();
 
   const isPrintDisabled =
@@ -141,29 +166,6 @@ const PreviewChargesModal = ({
                 {chargeMessage}
               </p>
             </div>
-
-            {previewData?.accountToChargeName && (
-              <div className="col-span-2 mt-1">
-                <p className="text-sm text-slate-600">
-                  Account to Charge - Name
-                </p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {previewData.accountToChargeName}
-                </p>
-                <p className="text-sm text-slate-600 mt-2">
-                  Account to Charge - Balance
-                </p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {formatGhsAmount(previewData.accountToChargeBalance ?? 0)}
-                </p>
-              </div>
-            )}
-
-            {insufficientFunds && (
-              <div className="col-span-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
-                {`Insufficient funds. Available: ${formatGhsAmount(accountBalance)}. Required: ${formatGhsAmount(totalCharge)}.`}
-              </div>
-            )}
           </div>
         )}
 

@@ -24,6 +24,9 @@ WriteTo.Console(
 
 var builder  = WebApplication.CreateBuilder(args);
 
+
+builder.Host.UseSerilog();
+
 //Registering services
 
 //controller support

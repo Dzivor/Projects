@@ -62,6 +62,7 @@ const VisaStatement = () => {
   const navigate = useNavigate();
   const [isLookupLoading, setIsLookupLoading] = useState(false);
   const [accountName, setAccountName] = useState("");
+  const [accountBalance, setAccountBalance] = useState<number | null>(null);
   const [lookupError, setLookupError] = useState("");
   const [previewResults, setPreviewResults] =
     useState<StatementPreviewResponse | null>(null);
@@ -111,7 +112,10 @@ const VisaStatement = () => {
     try {
       const payload = buildRequestPayload(values);
       const response = await previewStatement(payload);
-      setPreviewResults(response);
+      setPreviewResults({
+        ...response,
+        accountBalance: accountBalance ?? response.bookBalance,
+      });
     } catch (error) {
       if (error instanceof AxiosError && error.code === "ERR_CANCELED") {
         return;
@@ -246,6 +250,7 @@ const VisaStatement = () => {
 
         lastResolvedAccountNumberRef.current = normalizedAccountNumber;
         setAccountName(account.accountName);
+        setAccountBalance(account.accountBalance);
 
         if (!chargeAltAccount) {
           setFieldValue("chargeAccNumber", normalizedAccountNumber);
@@ -261,6 +266,7 @@ const VisaStatement = () => {
 
         lastResolvedAccountNumberRef.current = "";
         setAccountName("");
+        setAccountBalance(null);
         if (!chargeAltAccount) {
           setFieldValue("chargeAccNumber", "");
         }
@@ -286,6 +292,7 @@ const VisaStatement = () => {
 
     if (!accountNumber) {
       setAccountName("");
+      setAccountBalance(null);
       setLookupError("");
       lastResolvedAccountNumberRef.current = "";
       if (!chargeAltAccount) {
@@ -296,6 +303,7 @@ const VisaStatement = () => {
 
     if (accountNumber.length < 13) {
       setAccountName("");
+      setAccountBalance(null);
       setLookupError("");
       lastResolvedAccountNumberRef.current = "";
       if (!chargeAltAccount) {
@@ -511,6 +519,7 @@ const VisaStatement = () => {
         previewData={previewResults}
         channel="VISA"
         waiveCharge={formik.values.waiveCharge}
+        chargeAltAccount={formik.values.chargeAltAccount}
         isPreviewLoading={isPreviewLoading}
         previewErrorMessage={previewErrorMessage}
         isPrinting={isPrintLoading}
