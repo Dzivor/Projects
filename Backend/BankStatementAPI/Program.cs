@@ -2,6 +2,25 @@ using BankStatementAPI.Services;
 using BankStatementAPI.Middleware;
 using BankStatementAPI.Data;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
+
+Log.Logger = new LoggerConfiguration()
+.MinimumLevel.Information()
+//dev? Show everything including debugging
+.MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+.Enrich.FromLogContext().
+WriteTo.Console(
+    outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+)
+// Write to file - essential for prod
+.WriteTo.File(
+    path: "C:\\Logs\\BankStatementAPI\\log-.txt",
+     rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 30,
+        fileSizeLimitBytes: 10_000_000,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+    )
+    .CreateLogger();
 
 var builder  = WebApplication.CreateBuilder(args);
 
@@ -62,6 +81,19 @@ builder.Services.AddCors(options =>
 
 var app= builder.Build();
 
+// Log database connection on startup
+try
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.CanConnect();
+    Log.Information("Database connection successful");
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Database connection failed on startup");
+}
+
 //swagger 
 if (app.Environment.IsDevelopment())
 {
@@ -104,5 +136,12 @@ app.UseAuthorization();
 //map controllers
 app.MapControllers();
 
-
-app.Run();
+//Ensuring logs are flushed before app shuts down
+try
+{
+  app.Run();  
+}
+finally
+{
+    Log.CloseAndFlush();
+}
