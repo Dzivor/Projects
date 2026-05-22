@@ -9,10 +9,12 @@ namespace BankStatementAPI.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(AuthService authService)
+        public AuthController(AuthService authService, ILogger<AuthController> logger)
         {
             _authService = authService;
+            _logger = logger;
         }
 
         [HttpPost("login")]
@@ -32,14 +34,18 @@ namespace BankStatementAPI.Controllers
             try
             {
                 var result = await _authService.Login(request);
+                
 
                 // Always return 200
                 // Frontend reads result.Success to determine what to do
                 return Ok(result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // Log the exception here when Serilog is added
+                _logger.LogError(ex,
+                 "An error occurred while processing login request for username: {Username}", 
+                 request.Username);
                 return Ok(new LoginResponseDTO
                 {
                     Success = false,
