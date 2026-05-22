@@ -1,6 +1,7 @@
 using System.DirectoryServices.AccountManagement;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 using BankStatementAPI.Data;
 using BankStatementAPI.DTOs;
 using BankStatementAPI.Models;
@@ -13,11 +14,13 @@ namespace BankStatementAPI.Services
     {
         private readonly IConfiguration _config;
         private readonly AppDbContext _context;
+        private readonly ILogger<AuthService> _logger;
 
-        public AuthService(IConfiguration config, AppDbContext context)
+        public AuthService(IConfiguration config, AppDbContext context, ILogger<AuthService> logger)
         {
             _config = config;
             _context = context;
+            _logger = logger;
         }
 
         public async Task<LoginResponseDTO> Login(LoginRequestDTO request)
@@ -32,16 +35,23 @@ namespace BankStatementAPI.Services
             if (cleanUsername.Contains("@"))
                 cleanUsername = cleanUsername.Split('@').First();
 
+
+
+                _logger.LogInformation("Login attempt for username: {Username}", cleanUsername);
+
             // Step 1 — Validate against Active Directory
             StaffInfo? staffInfo = ValidateAgainstAD(cleanUsername, request.Password);
 
             // Step 2 — AD validation failed
             if (staffInfo is null)
+            {
+                _logger.LogWarning("AD validation failed for username: {Username}", cleanUsername);
                 return new LoginResponseDTO
                 {
                     Success = false,
                     Message = "Invalid username or password."
                 };
+            }
 
             // Step 3 — Check Users table
             var user = await _context.Users
@@ -50,21 +60,27 @@ namespace BankStatementAPI.Services
 
             // Step 4 — Not in Users table
             if (user is null)
+            {
+                _logger.LogWarning("User not found in database for username: {Username}", cleanUsername);
                 return new LoginResponseDTO
                 {
                     Success = false,
                     Message = "Access denied. Please contact IT Admin."
                 };
-
+            }
             // Step 5 — Account disabled
             if (!user.IsActive)
+            {
+                _logger.LogWarning("User account is disabled for username: {Username}", cleanUsername);
                 return new LoginResponseDTO
                 {
                     Success = false,
                     Message = "Your account has been disabled. Please contact IT Admin."
                 };
+            }
 
             // Step 6 — Authorized — generate token
+            _logger.LogInformation("Login successful for username: {Username} (UserId: {UserId})", cleanUsername, user.Id);
             string token = GenerateJwtToken(staffInfo, user.Id);
 
             return new LoginResponseDTO
@@ -108,8 +124,9 @@ namespace BankStatementAPI.Services
                     Email = user.EmailAddress ?? ""
                 };
             }
-            catch
+            catch(Exception ex)
             {
+                _logger.LogError(ex, "Error occurred while validating against Active Directory for username: {Username}", username);
                 return null;
             }
         }
