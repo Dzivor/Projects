@@ -164,6 +164,14 @@ const ESBStatement = () => {
       .replace(/\D/g, "")
       .slice(0, 13);
     formik.setFieldValue("accountNumber", normalizedAccountNumber);
+
+    if (normalizedAccountNumber.length < 13) {
+      setAccountName("");
+      setErrorMessage("");
+      setIsLookupLoading(false);
+      lastResolvedAccountNumberRef.current = "";
+      latestLookupRequestIdRef.current += 1;
+    }
   };
 
   const lookupAccountName = useCallback(async (accountNumber: string) => {
@@ -221,17 +229,7 @@ const ESBStatement = () => {
   useEffect(() => {
     const accountNumber = formik.values.accountNumber.trim();
 
-    if (!accountNumber) {
-      setAccountName("");
-      setErrorMessage("");
-      lastResolvedAccountNumberRef.current = "";
-      return;
-    }
-
     if (accountNumber.length < 13) {
-      setAccountName("");
-      setErrorMessage("");
-      lastResolvedAccountNumberRef.current = "";
       return;
     }
 
@@ -251,7 +249,7 @@ const ESBStatement = () => {
   };
 
   return (
-    <main className="relative min-h-screen bg-[#f7f8fc]">
+    <main className="relative min-h-screen bg-[#f7f8fc] bg-astek-pattern">
       <div className="absolute left-6 top-6 z-10">
         <BackButton />
       </div>
@@ -266,117 +264,119 @@ const ESBStatement = () => {
           Logout
         </button>
       </div>
-
-      <div className="text-center py-8 px-4">
-        <h1 className="text-3xl font-semibold tracking-[0.18em] text-slate-900 sm:text-4xl">
-          ESB STATEMENT
-        </h1>
-        <h2 className="mt-3 text-lg font-medium text-slate-600 sm:text-xl">
-          Welcome, {userName}.
-        </h2>
-        <p className="mt-1 text-sm leading-6 text-slate-500 sm:text-base">
-          Enter the details to print your statement
-        </p>
-      </div>
-
       <div className="flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <form
-            onSubmit={formik.handleSubmit}
-            className="grid w-full grid-cols-[200px_1fr] items-center gap-x-4 gap-y-10"
-          >
-            <label
-              htmlFor="accountNumber"
-              className="text-sm font-medium text-slate-700"
+        <div className="w-full max-w-3xl rounded-2xl border border-white/30 bg-astek-pattern-panel p-6 text-slate-900 shadow-md backdrop-blur-sm sm:p-8">
+          <div className="text-center py-8 px-4">
+            <h1 className="text-3xl font-bold tracking-[0.18em] text-slate-950 drop-shadow-sm sm:text-4xl">
+              ESB STATEMENT
+            </h1>
+            <h2 className="mt-3 text-lg font-semibold text-slate-800 sm:text-xl">
+              Welcome, {userName}.
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-slate-700 sm:text-base">
+              Enter the details to print your statement
+            </p>
+          </div>
+          <div className="bg-white border-0 rounded-lg p-6 shadow-[10px_10px_20px_0px_rgba(0,0,0,0.1)]">
+            <form
+              onSubmit={formik.handleSubmit}
+              className="grid w-full grid-cols-[200px_1fr] items-center gap-x-4 gap-y-10"
             >
-              Account Number:
-            </label>
-            <input
-              id="accountNumber"
-              name="accountNumber"
-              value={formik.values.accountNumber}
-              onChange={handlePrimaryAccountNumberChange}
-              onBlur={formik.handleBlur}
-              inputMode="numeric"
-              maxLength={13}
-              minLength={13}
-              pattern="[0-9]{13}"
-              required
-              title="Account number must be exactly 13 digits"
-              placeholder="Enter Account Number"
-              className="w-full rounded border p-2"
-            />
-
-            {errorMessage && (
-              <div className="col-span-2">
-                <p className="rounded-md bg-red-50 p-3 text-sm text-red-700 border border-red-200">
-                  {errorMessage}
-                </p>
-              </div>
-            )}
-
-            <label className="text-sm font-medium text-slate-700">
-              Account Name:
-            </label>
-            <input
-              value={isLookupLoading ? "Loading account name..." : accountName}
-              readOnly
-              placeholder="Account name will appear here"
-              className="w-full rounded border bg-slate-50 p-2 text-slate-700"
-            />
-
-            <label
-              htmlFor="startDate"
-              className="text-sm font-medium text-slate-700"
-            >
-              Start Date:
-            </label>
-            <div className="relative">
-              <input
-                id="startDate"
-                type="date"
-                required
-                name="startDate"
-                value={formik.values.startDate}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                onKeyDown={blockManualDateTyping}
-                onPaste={(e) => e.preventDefault()}
-                className="w-full rounded border p-2 pr-10"
-              />
-            </div>
-
-            <label
-              htmlFor="endDate"
-              className="text-sm font-medium text-slate-700"
-            >
-              End Date:
-            </label>
-            <div className="relative">
-              <input
-                id="endDate"
-                type="date"
-                name="endDate"
-                value={formik.values.endDate}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                required
-                onKeyDown={blockManualDateTyping}
-                onPaste={(e) => e.preventDefault()}
-                className="w-full rounded border p-2 pr-10"
-              />
-            </div>
-
-            <div className="col-span-2 flex justify-center">
-              <button
-                type="submit"
-                disabled={isPreviewLoading}
-                className="rounded bg-amber-400 px-4 py-2 text-white"
+              <label
+                htmlFor="accountNumber"
+                className="text-sm font-medium text-slate-700"
               >
-                {isPreviewLoading ? "Loading Preview..." : "Print"}
-              </button>
-            </div>
-          </form>
+                Account Number:
+              </label>
+              <input
+                id="accountNumber"
+                name="accountNumber"
+                value={formik.values.accountNumber}
+                onChange={handlePrimaryAccountNumberChange}
+                onBlur={formik.handleBlur}
+                inputMode="numeric"
+                maxLength={13}
+                minLength={13}
+                pattern="[0-9]{13}"
+                required
+                title="Account number must be exactly 13 digits"
+                placeholder="Enter Account Number"
+                className="w-full rounded border p-2"
+              />
+
+              {errorMessage && (
+                <div className="col-span-2">
+                  <p className="rounded-md bg-red-50 p-3 text-sm text-red-700 border border-red-200">
+                    {errorMessage}
+                  </p>
+                </div>
+              )}
+
+              <label className="text-sm font-medium text-slate-700">
+                Account Name:
+              </label>
+              <input
+                value={
+                  isLookupLoading ? "Loading account name..." : accountName
+                }
+                readOnly
+                placeholder="Account name will appear here"
+                className="w-full rounded border bg-slate-50 p-2 text-slate-700"
+              />
+
+              <label
+                htmlFor="startDate"
+                className="text-sm font-medium text-slate-700"
+              >
+                Start Date:
+              </label>
+              <div className="relative">
+                <input
+                  id="startDate"
+                  type="date"
+                  required
+                  name="startDate"
+                  value={formik.values.startDate}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  onKeyDown={blockManualDateTyping}
+                  onPaste={(e) => e.preventDefault()}
+                  className="w-full rounded border p-2 pr-10"
+                />
+              </div>
+
+              <label
+                htmlFor="endDate"
+                className="text-sm font-medium text-slate-700"
+              >
+                End Date:
+              </label>
+              <div className="relative">
+                <input
+                  id="endDate"
+                  type="date"
+                  name="endDate"
+                  value={formik.values.endDate}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  required
+                  onKeyDown={blockManualDateTyping}
+                  onPaste={(e) => e.preventDefault()}
+                  className="w-full rounded border p-2 pr-10"
+                />
+              </div>
+
+              <div className="col-span-2 flex justify-center">
+                <button
+                  type="submit"
+                  disabled={isPreviewLoading}
+                  className="rounded bg-amber-400 px-4 py-2 text-white"
+                >
+                  {isPreviewLoading ? "Loading Preview..." : "Print"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
 

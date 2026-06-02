@@ -333,7 +333,7 @@ const VisaStatement = () => {
   };
 
   return (
-    <main className="relative min-h-screen bg-[#f7f8fc]">
+    <main className="relative min-h-screen text-slate-50 bg-astek-pattern ">
       <div className="absolute left-6 top-6 z-10">
         <BackButton />
       </div>
@@ -348,166 +348,171 @@ const VisaStatement = () => {
           Logout
         </button>
       </div>
-
-      <div className="text-center py-8 px-4">
-        <h1 className="text-3xl font-semibold tracking-[0.18em] text-slate-900 sm:text-4xl">
-          VISA STATEMENT
-        </h1>
-        <h2 className="mt-3 text-lg font-medium text-slate-600 sm:text-xl">
-          Welcome, {userName}.
-        </h2>
-        <p className="mt-1 text-sm leading-6 text-slate-500 sm:text-base">
-          Enter the details to preview charges
-        </p>
-      </div>
-
       <div className="flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <form
-            onSubmit={formik.handleSubmit}
-            className="grid w-full grid-cols-[200px_1fr] items-center gap-x-4 gap-y-10"
-          >
-            <label
-              htmlFor="accountNumber"
-              className="text-sm font-medium text-slate-700"
+        <div className="w-full max-w-3xl rounded-2xl border border-white/30 bg-astek-pattern-panel p-6 text-slate-900 shadow-md backdrop-blur-sm sm:p-8">
+          <div className="text-center py-8 px-4">
+            <h2 className="text-3xl font-bold tracking-[0.18em] text-slate-950 drop-shadow-sm sm:text-4xl">
+              VISA STATEMENT.
+            </h2>
+            <h2 className="mt-3 text-lg font-semibold text-slate-800 sm:text-xl">
+              Welcome, {userName}.
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-slate-700 sm:text-base">
+              Enter the details to preview charges
+            </p>
+          </div>
+
+          <div className="bg-white border-0 rounded-lg p-6 shadow-[10px_10px_20px_0px_rgba(0,0,0,0.1)]">
+            <form
+              onSubmit={formik.handleSubmit}
+              className="grid w-full grid-cols-[200px_1fr] items-center gap-x-4 gap-y-10"
             >
-              Account Number:
-            </label>
-            <input
-              id="accountNumber"
-              name="accountNumber"
-              value={formik.values.accountNumber}
-              onChange={handlePrimaryAccountNumberChange}
-              onBlur={formik.handleBlur}
-              inputMode="numeric"
-              maxLength={13}
-              minLength={13}
-              pattern="[0-9]{13}"
-              required
-              title="Fill out this field with a valid account number"
-              placeholder="Enter Account Number"
-              className="w-full rounded border p-2"
-            />
-
-            {lookupError && (
-              <div className="col-span-2">
-                <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                  {lookupError}
-                </p>
-              </div>
-            )}
-
-            <label className="text-sm font-medium text-slate-700">
-              Account Name:
-            </label>
-            <input
-              value={isLookupLoading ? "Loading account name..." : accountName}
-              readOnly
-              placeholder="Account name will appear here"
-              className="w-full rounded border bg-slate-50 p-2 text-slate-700"
-            />
-
-            <label
-              htmlFor="startDate"
-              className="text-sm font-medium text-slate-700"
-            >
-              Start Date:
-            </label>
-            <div className="relative">
-              <input
-                id="startDate"
-                type="date"
-                name="startDate"
-                value={formik.values.startDate}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                onKeyDown={blockManualDateTyping}
-                onPaste={(e) => e.preventDefault()}
-                className="w-full rounded border p-2 pr-10"
-              />
-            </div>
-
-            <label
-              htmlFor="endDate"
-              className="text-sm font-medium text-slate-700"
-            >
-              End Date:
-            </label>
-            <div className="relative">
-              <input
-                id="endDate"
-                type="date"
-                name="endDate"
-                value={formik.values.endDate}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                onKeyDown={blockManualDateTyping}
-                onPaste={(e) => e.preventDefault()}
-                className="w-full rounded border p-2 pr-10"
-              />
-            </div>
-
-            <label
-              htmlFor="chargeAltAccount"
-              className="text-sm font-medium text-slate-700"
-            >
-              Charge Alt Account:
-            </label>
-            <input
-              id="chargeAltAccount"
-              type="checkbox"
-              name="chargeAltAccount"
-              checked={formik.values.chargeAltAccount}
-              onChange={handleChargeAltAccountChange}
-              className="h-4 w-4 justify-self-start accent-amber-500"
-            />
-
-            <label
-              htmlFor="chargeAccNumber"
-              className="text-sm font-medium text-slate-700"
-            >
-              Charge Account Number:
-            </label>
-            <input
-              ref={chargeAccountInputRef}
-              id="chargeAccNumber"
-              name="chargeAccNumber"
-              value={formik.values.chargeAccNumber}
-              onChange={handleChargeAccountNumberChange}
-              disabled={!formik.values.chargeAltAccount}
-              inputMode="numeric"
-              maxLength={13}
-              minLength={13}
-              pattern="[0-9]{13}"
-              title="Fill out this field with a valid UMB account number"
-              placeholder=" "
-              className="w-full rounded border p-2"
-            />
-            <label
-              htmlFor="waiveCharge"
-              className="text-sm font-medium text-slate-700"
-            >
-              Waive Charge:
-            </label>
-            <input
-              id="waiveCharge"
-              type="checkbox"
-              name="waiveCharge"
-              checked={formik.values.waiveCharge}
-              onChange={formik.handleChange}
-              className="h-4 w-4 justify-self-start accent-amber-500"
-            />
-
-            <div className="col-span-2 flex justify-center pt-2">
-              <button
-                type="submit"
-                disabled={isPreviewLoading}
-                className="rounded bg-amber-400 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50"
+              <label
+                htmlFor="accountNumber"
+                className="text-sm font-semibold text-slate-900"
               >
-                {isPreviewLoading ? "Loading Preview..." : "Preview Charges"}
-              </button>
-            </div>
-          </form>
+                Account Number:
+              </label>
+              <input
+                id="accountNumber"
+                name="accountNumber"
+                value={formik.values.accountNumber}
+                onChange={handlePrimaryAccountNumberChange}
+                onBlur={formik.handleBlur}
+                inputMode="numeric"
+                maxLength={13}
+                minLength={13}
+                pattern="[0-9]{13}"
+                required
+                title="Fill out this field with a valid account number"
+                placeholder="Enter Account Number"
+                className="w-full rounded border p-2"
+              />
+
+              {lookupError && (
+                <div className="col-span-2">
+                  <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    {lookupError}
+                  </p>
+                </div>
+              )}
+
+              <label className="text-sm font-semibold text-slate-900">
+                Account Name:
+              </label>
+              <input
+                value={
+                  isLookupLoading ? "Loading account name..." : accountName
+                }
+                readOnly
+                placeholder="Account name will appear here"
+                className="w-full rounded border bg-slate-50 p-2 text-slate-500"
+              />
+
+              <label
+                htmlFor="startDate"
+                className="text-sm font-semibold text-slate-900"
+              >
+                Start Date:
+              </label>
+              <div className="relative">
+                <input
+                  id="startDate"
+                  type="date"
+                  name="startDate"
+                  required
+                  value={formik.values.startDate}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  onKeyDown={blockManualDateTyping}
+                  onPaste={(e) => e.preventDefault()}
+                  className="w-full rounded border p-2 pr-10"
+                />
+              </div>
+
+              <label
+                htmlFor="endDate"
+                className="text-sm font-semibold text-slate-900"
+              >
+                End Date:
+              </label>
+              <div className="relative">
+                <input
+                  id="endDate"
+                  type="date"
+                  name="endDate"
+                  required
+                  value={formik.values.endDate}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  onKeyDown={blockManualDateTyping}
+                  onPaste={(e) => e.preventDefault()}
+                  className="w-full rounded border p-2 pr-10"
+                />
+              </div>
+
+              <label
+                htmlFor="chargeAltAccount"
+                className="text-sm font-semibold text-slate-900"
+              >
+                Charge Alt Account:
+              </label>
+              <input
+                id="chargeAltAccount"
+                type="checkbox"
+                name="chargeAltAccount"
+                checked={formik.values.chargeAltAccount}
+                onChange={handleChargeAltAccountChange}
+                className="h-4 w-4 justify-self-start accent-amber-500"
+              />
+
+              <label
+                htmlFor="chargeAccNumber"
+                className="text-sm font-medium text-slate-900"
+              >
+                Charge Account Number:
+              </label>
+              <input
+                ref={chargeAccountInputRef}
+                id="chargeAccNumber"
+                name="chargeAccNumber"
+                value={formik.values.chargeAccNumber}
+                onChange={handleChargeAccountNumberChange}
+                disabled={!formik.values.chargeAltAccount}
+                inputMode="numeric"
+                maxLength={13}
+                minLength={13}
+                pattern="[0-9]{13}"
+                title="Fill out this field with a valid UMB account number"
+                placeholder=" "
+                className="w-full rounded border p-2"
+              />
+              <label
+                htmlFor="waiveCharge"
+                className="text-sm font-medium text-slate-900"
+              >
+                Waive Charge:
+              </label>
+              <input
+                id="waiveCharge"
+                type="checkbox"
+                name="waiveCharge"
+                checked={formik.values.waiveCharge}
+                onChange={formik.handleChange}
+                className="h-4 w-4 justify-self-start accent-amber-500"
+              />
+
+              <div className="col-span-2 flex justify-center pt-2">
+                <button
+                  type="submit"
+                  disabled={isPreviewLoading}
+                  className="rounded bg-amber-400 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isPreviewLoading ? "Loading Preview..." : "Preview Charges"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
 

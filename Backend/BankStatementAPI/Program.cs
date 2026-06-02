@@ -90,7 +90,7 @@ try
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.CanConnect();
-    Log.Information("Database connection successful");
+    Log.Information("Database connection successful on startup");
 }
 catch (Exception ex)
 {
