@@ -61,6 +61,7 @@ builder.Services.AddScoped<ChargingService>();
 builder.Services.AddScoped<PdfService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AuditService>();
+builder.Services.AddScoped<AdminService>();
 
 
 //frontend connection

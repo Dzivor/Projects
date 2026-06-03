@@ -81,7 +81,7 @@ namespace BankStatementAPI.Services
 
             // Step 6 — Authorized — generate token
             _logger.LogInformation("Login successful for username: {Username} (UserId: {UserId})", cleanUsername, user.Id);
-            string token = GenerateJwtToken(staffInfo, user.Id);
+            string token = GenerateJwtToken(staffInfo, user.Id, user.IsAdmin);
 
             return new LoginResponseDTO
             {
@@ -91,6 +91,7 @@ namespace BankStatementAPI.Services
                 Username = user.Username,
                 FullName = user.FullName,
                 UserId = user.Id,
+                IsAdmin = user.IsAdmin,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(30)
             };
         }
@@ -131,7 +132,7 @@ namespace BankStatementAPI.Services
             }
         }
 
-        private string GenerateJwtToken(StaffInfo staff, int userId)
+        private string GenerateJwtToken(StaffInfo staff, int userId, bool isAdmin)
         {
             string jwtKey = _config["Jwt:Key"]!;
             string jwtIssuer = _config["Jwt:Issuer"]!;
@@ -142,6 +143,7 @@ namespace BankStatementAPI.Services
                 new Claim(ClaimTypes.GivenName, staff.FullName),
                 new Claim(ClaimTypes.Email, staff.Email),
                 new Claim("userId", userId.ToString()),
+                new Claim("isAdmin", isAdmin.ToString().ToLowerInvariant()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 

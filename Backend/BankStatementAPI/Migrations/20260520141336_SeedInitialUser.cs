@@ -11,10 +11,12 @@ namespace BankStatementAPI.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.InsertData(
-                table: "Users",
-                columns: new[] { "Id", "AddedBy", "CreatedAt", "Email", "FullName", "IsActive", "Username" },
-                values: new object[] { 1, "Daniel", new DateTime(2026, 5, 20, 0, 0, 0, 0, DateTimeKind.Utc), "Daniel.Dzivor@myumbbank.com", "Daniel Dzivor", true, "Daniel.Dzivor" });
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (SELECT 1 FROM [Users] WHERE [Id] = 1)
+BEGIN
+    INSERT INTO [Users] ([Id], [AddedBy], [CreatedAt], [Email], [FullName], [IsActive], [Username])
+    VALUES (1, N'Daniel', '2026-05-20T00:00:00.0000000Z', N'Daniel.Dzivor@myumbbank.com', N'Daniel Dzivor', CAST(1 AS bit), N'Daniel.Dzivor')
+END");
         }
 
         /// <inheritdoc />

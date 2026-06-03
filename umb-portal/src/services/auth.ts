@@ -18,6 +18,7 @@ export type LoginResponse = {
   fullName?: string;
   userId?: number;
   expiresAt?: string;
+  isAdmin?: boolean;
   message?: string;
 };
 

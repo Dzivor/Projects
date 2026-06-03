@@ -1,7 +1,7 @@
 import { useFormik } from "formik";
 import { AxiosError } from "axios";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import {
   generateStatementPdf,
@@ -290,29 +290,18 @@ const VisaStatement = () => {
   useEffect(() => {
     const accountNumber = formik.values.accountNumber.trim();
 
-    if (!accountNumber) {
-      setAccountName("");
-      setAccountBalance(null);
-      setLookupError("");
-      lastResolvedAccountNumberRef.current = "";
-      if (!chargeAltAccount) {
-        setFieldValue("chargeAccNumber", "");
-      }
-      return;
-    }
-
-    if (accountNumber.length < 13) {
-      setAccountName("");
-      setAccountBalance(null);
-      setLookupError("");
-      lastResolvedAccountNumberRef.current = "";
-      if (!chargeAltAccount) {
-        setFieldValue("chargeAccNumber", "");
-      }
-      return;
-    }
-
     const timeoutId = window.setTimeout(() => {
+      if (!accountNumber || accountNumber.length < 13) {
+        setAccountName("");
+        setAccountBalance(null);
+        setLookupError("");
+        lastResolvedAccountNumberRef.current = "";
+        if (!chargeAltAccount) {
+          setFieldValue("chargeAccNumber", "");
+        }
+        return;
+      }
+
       void lookupAccountName(accountNumber);
     }, 250);
 
@@ -333,7 +322,7 @@ const VisaStatement = () => {
   };
 
   return (
-    <main className="relative min-h-screen text-slate-50 bg-astek-pattern ">
+    <main className="relative min-h-screen text-slate-50 bg-astek-pattern">
       <div className="absolute left-6 top-6 z-10">
         <BackButton />
       </div>
@@ -348,6 +337,7 @@ const VisaStatement = () => {
           Logout
         </button>
       </div>
+
       <div className="flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-3xl rounded-2xl border border-white/30 bg-astek-pattern-panel p-6 text-slate-900 shadow-md backdrop-blur-sm sm:p-8">
           <div className="text-center py-8 px-4">
@@ -487,6 +477,7 @@ const VisaStatement = () => {
                 placeholder=" "
                 className="w-full rounded border p-2"
               />
+
               <label
                 htmlFor="waiveCharge"
                 className="text-sm font-medium text-slate-900"

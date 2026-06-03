@@ -37,6 +37,7 @@ namespace BankStatementAPI.Data
                     FullName = "Daniel Dzivor",
                     Email = "Daniel.Dzivor@myumbbank.com",
                     IsActive = true,
+                    IsAdmin = false,
                     CreatedAt = new DateTime(2026, 5, 20, 0, 0, 0, DateTimeKind.Utc),
                     AddedBy = "Daniel"
                 });

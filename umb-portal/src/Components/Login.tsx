@@ -1,6 +1,6 @@
 import { useFormik } from "formik";
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { Lock, User, Eye, EyeOff } from "lucide-react";
 import bgPattern from "../assets/Astek Patern-02.png";
 import umbLogo from "../assets/umb-logo.jpg";
@@ -59,10 +59,15 @@ function Login() {
           const authUser = {
             ...result,
             firstName: getFirstName(result.fullName ?? ""),
+            isAdmin: result.isAdmin ?? false,
           };
           localStorage.setItem("authToken", result.token);
           localStorage.setItem("authUser", JSON.stringify(authUser));
-          navigate("/welcome");
+          if (authUser.isAdmin) {
+            navigate("/admin");
+          } else {
+            navigate("/welcome");
+          }
         }
       } catch {
         // Only for genuine network failures
