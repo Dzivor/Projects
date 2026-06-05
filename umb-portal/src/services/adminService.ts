@@ -4,12 +4,51 @@ import {
   releaseTrackedAbortController,
 } from "../services/requestManager";
 
+/**
+ * Admin Service
+ * Backend reference (BankStatementAPI):
+ * - Controllers/AdminController.cs
+ *   - GET    /api/admin/stats
+ *   - GET    /api/admin/users
+ *   - GET    /api/admin/users/ad-lookup/{username}
+ *   - POST   /api/admin/users
+ *   - PUT    /api/admin/users/{id}/toggle
+ *   - GET    /api/admin/audit-logs
+ *   - GET    /api/admin/audit-logs/export/excel
+ *   - GET    /api/admin/audit-logs/export/pdf
+ *   - GET    /api/admin/settings
+ *   - GET    /api/admin/settings/history
+ *   - PUT    /api/admin/settings/{key}
+ */
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5300";
 
-const getAuthHeader = (): { Authorization: string } => {
-  const token = localStorage.getItem("authToken");
-  return { Authorization: `Bearer ${token ?? ""}` };
+const getAuthHeader = (): { Authorization: string } => ({
+  Authorization: `Bearer ${localStorage.getItem("authToken") ?? ""}`,
+});
+
+type AxiosErrorLike = {
+  response?: {
+    status?: unknown;
+  };
+};
+
+const getStatusFromError = (err: unknown): number | null => {
+  if (typeof err === "object" && err !== null && "response" in err) {
+    const maybe = err as AxiosErrorLike;
+    const status = maybe.response?.status;
+    if (typeof status === "number") return status;
+  }
+  return null;
+};
+
+const handleAuthError = (status: number) => {
+  if (status === 401 || status === 403) {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("authUser");
+    window.location.href = "/";
+  }
 };
 
 export interface StaffActivityDTO {
@@ -77,12 +116,43 @@ export interface AuditLogFilters {
   accountNumber?: string;
 }
 
-const handleAuthError = (status: number) => {
-  if (status === 401 || status === 403) {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("authUser");
-    window.location.href = "/";
+export interface AppSettingDTO {
+  id: number;
+  key: string;
+  value: string;
+  description: string;
+  dataType: string;
+  lastUpdatedAt: string;
+  lastUpdatedBy: string;
+}
+
+export interface SettingsAuditLogDTO {
+  id: number;
+  settingKey: string;
+  oldValue: string;
+  newValue: string;
+  changedBy: string;
+  changedAt: string;
+  reason?: string;
+}
+
+export interface UpdateSettingRequest {
+  value: string;
+  reason?: string;
+}
+
+const isNonEmptyString = (v: unknown): v is string =>
+  typeof v === "string" && v.trim().length > 0;
+
+const buildQueryParams = (filters: AuditLogFilters): Record<string, string> => {
+  const entries = Object.entries(filters) as Array<
+    [keyof AuditLogFilters, string | undefined]
+  >;
+  const out: Record<string, string> = {};
+  for (const [k, v] of entries) {
+    if (isNonEmptyString(v)) out[k as string] = v;
   }
+  return out;
 };
 
 export const getStats = async (
@@ -90,6 +160,7 @@ export const getStats = async (
 ): Promise<DashboardStatsDTO> => {
   const controller = createTrackedAbortController();
   if (signal) signal.addEventListener("abort", () => controller.abort());
+
   try {
     const resp = await axios.get<DashboardStatsDTO>(
       `${API_BASE_URL}/api/admin/stats`,
@@ -99,8 +170,9 @@ export const getStats = async (
       },
     );
     return resp.data;
-  } catch (err: any) {
-    if (err?.response) handleAuthError(err.response.status);
+  } catch (err: unknown) {
+    const status = getStatusFromError(err);
+    if (status !== null) handleAuthError(status);
     throw err;
   } finally {
     releaseTrackedAbortController(controller);
@@ -112,8 +184,9 @@ export const getUsers = async (
   status?: string,
 ): Promise<AdminUserDTO[]> => {
   const params: Record<string, string> = {};
-  if (search) params.search = search;
-  if (status) params.status = status;
+  if (isNonEmptyString(search)) params.search = search;
+  if (isNonEmptyString(status)) params.status = status;
+
   try {
     const resp = await axios.get<AdminUserDTO[]>(
       `${API_BASE_URL}/api/admin/users`,
@@ -123,8 +196,9 @@ export const getUsers = async (
       },
     );
     return resp.data;
-  } catch (err: any) {
-    if (err?.response) handleAuthError(err.response.status);
+  } catch (err: unknown) {
+    const statusCode = getStatusFromError(err);
+    if (statusCode !== null) handleAuthError(statusCode);
     throw err;
   }
 };
@@ -135,13 +209,12 @@ export const adLookup = async (
   try {
     const resp = await axios.get<AdLookupResultDTO>(
       `${API_BASE_URL}/api/admin/users/ad-lookup/${encodeURIComponent(username)}`,
-      {
-        headers: getAuthHeader(),
-      },
+      { headers: getAuthHeader() },
     );
     return resp.data;
-  } catch (err: any) {
-    if (err?.response) handleAuthError(err.response.status);
+  } catch (err: unknown) {
+    const statusCode = getStatusFromError(err);
+    if (statusCode !== null) handleAuthError(statusCode);
     throw err;
   }
 };
@@ -155,12 +228,16 @@ export const addUser = async (
       `${API_BASE_URL}/api/admin/users`,
       { username, isAdmin },
       {
-        headers: { ...getAuthHeader(), "Content-Type": "application/json" },
+        headers: {
+          ...getAuthHeader(),
+          "Content-Type": "application/json",
+        },
       },
     );
     return resp.data;
-  } catch (err: any) {
-    if (err?.response) handleAuthError(err.response.status);
+  } catch (err: unknown) {
+    const statusCode = getStatusFromError(err);
+    if (statusCode !== null) handleAuthError(statusCode);
     throw err;
   }
 };
@@ -170,13 +247,12 @@ export const toggleUser = async (id: number): Promise<AdminUserDTO> => {
     const resp = await axios.put<AdminUserDTO>(
       `${API_BASE_URL}/api/admin/users/${id}/toggle`,
       null,
-      {
-        headers: getAuthHeader(),
-      },
+      { headers: getAuthHeader() },
     );
     return resp.data;
-  } catch (err: any) {
-    if (err?.response) handleAuthError(err.response.status);
+  } catch (err: unknown) {
+    const statusCode = getStatusFromError(err);
+    if (statusCode !== null) handleAuthError(statusCode);
     throw err;
   }
 };
@@ -184,17 +260,19 @@ export const toggleUser = async (id: number): Promise<AdminUserDTO> => {
 export const getAuditLogs = async (
   filters: AuditLogFilters = {},
 ): Promise<AuditLogDTO[]> => {
+  const params = buildQueryParams(filters);
   try {
     const resp = await axios.get<AuditLogDTO[]>(
       `${API_BASE_URL}/api/admin/audit-logs`,
       {
         headers: getAuthHeader(),
-        params: filters as Record<string, string>,
+        params,
       },
     );
     return resp.data;
-  } catch (err: any) {
-    if (err?.response) handleAuthError(err.response.status);
+  } catch (err: unknown) {
+    const statusCode = getStatusFromError(err);
+    if (statusCode !== null) handleAuthError(statusCode);
     throw err;
   }
 };
@@ -213,19 +291,22 @@ const downloadBlob = (blob: Blob, filename: string) => {
 export const exportExcel = async (
   filters: AuditLogFilters = {},
 ): Promise<void> => {
+  const params = buildQueryParams(filters);
   try {
     const resp = await axios.get(
       `${API_BASE_URL}/api/admin/audit-logs/export/excel`,
       {
         headers: getAuthHeader(),
-        params: filters as Record<string, string>,
+        params,
         responseType: "blob",
       },
     );
+
     const filename = `AuditLogs_${new Date().toISOString().slice(0, 10)}.xlsx`;
     downloadBlob(resp.data as Blob, filename);
-  } catch (err: any) {
-    if (err?.response) handleAuthError(err.response.status);
+  } catch (err: unknown) {
+    const statusCode = getStatusFromError(err);
+    if (statusCode !== null) handleAuthError(statusCode);
     throw err;
   }
 };
@@ -233,24 +314,80 @@ export const exportExcel = async (
 export const exportPdf = async (
   filters: AuditLogFilters = {},
 ): Promise<void> => {
+  const params = buildQueryParams(filters);
   try {
     const resp = await axios.get(
       `${API_BASE_URL}/api/admin/audit-logs/export/pdf`,
       {
         headers: getAuthHeader(),
-        params: filters as Record<string, string>,
+        params,
         responseType: "blob",
       },
     );
+
     const filename = `AuditLogs_${new Date().toISOString().slice(0, 10)}.pdf`;
     downloadBlob(resp.data as Blob, filename);
-  } catch (err: any) {
-    if (err?.response) handleAuthError(err.response.status);
+  } catch (err: unknown) {
+    const statusCode = getStatusFromError(err);
+    if (statusCode !== null) handleAuthError(statusCode);
     throw err;
   }
 };
 
-export default {
+export const getSettings = async (): Promise<AppSettingDTO[]> => {
+  try {
+    const resp = await axios.get<AppSettingDTO[]>(
+      `${API_BASE_URL}/api/admin/settings`,
+      {
+        headers: getAuthHeader(),
+      },
+    );
+    return resp.data;
+  } catch (err: unknown) {
+    const statusCode = getStatusFromError(err);
+    if (statusCode !== null) handleAuthError(statusCode);
+    throw err;
+  }
+};
+
+export const getSettingsHistory = async (): Promise<SettingsAuditLogDTO[]> => {
+  try {
+    const resp = await axios.get<SettingsAuditLogDTO[]>(
+      `${API_BASE_URL}/api/admin/settings/history`,
+      { headers: getAuthHeader() },
+    );
+    return resp.data;
+  } catch (err: unknown) {
+    const statusCode = getStatusFromError(err);
+    if (statusCode !== null) handleAuthError(statusCode);
+    throw err;
+  }
+};
+
+export const updateSetting = async (
+  key: string,
+  request: UpdateSettingRequest,
+): Promise<AppSettingDTO> => {
+  try {
+    const resp = await axios.put<AppSettingDTO>(
+      `${API_BASE_URL}/api/admin/settings/${encodeURIComponent(key)}`,
+      request,
+      {
+        headers: {
+          ...getAuthHeader(),
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    return resp.data;
+  } catch (err: unknown) {
+    const statusCode = getStatusFromError(err);
+    if (statusCode !== null) handleAuthError(statusCode);
+    throw err;
+  }
+};
+
+const adminService = {
   getStats,
   getUsers,
   adLookup,
@@ -259,4 +396,9 @@ export default {
   getAuditLogs,
   exportExcel,
   exportPdf,
+  getSettings,
+  getSettingsHistory,
+  updateSetting,
 };
+
+export default adminService;

@@ -96,17 +96,16 @@ namespace BankStatementAPI.Controllers
 
             // Step 4 — Build a rendered preview and derive pages from actual PDF layout.
             int numberOfPages = 1;
-            ChargingResult chargePreview = _chargingService.PreviewCharge(request, numberOfPages);
+            ChargingResult chargePreview = await _chargingService.PreviewCharge(request, numberOfPages);
             byte[] previewPdf = Array.Empty<byte>();
             var renderLoopStopwatch = Stopwatch.StartNew();
 
             for (int attempt = 0; attempt < 3; attempt++)
             {
                 var singleRenderStopwatch = Stopwatch.StartNew();
-                chargePreview = _chargingService.PreviewCharge(request, numberOfPages);
+                chargePreview = await _chargingService.PreviewCharge(request, numberOfPages);
                 (previewPdf, int renderedPages) = _pdfService.GenerateStatement(statement, chargePreview);
 
-                
                 singleRenderStopwatch.Stop();
                 _logger.LogInformation(
                     "Statement preview render attempt {Attempt} completed in {ElapsedMs} ms with {RenderedPages} pages",
@@ -115,17 +114,15 @@ namespace BankStatementAPI.Controllers
                     renderedPages);
 
                 if (renderedPages == numberOfPages)
-                {
                     break;
-                }
 
                 numberOfPages = renderedPages;
             }
 
             // Finalize preview details from a stable rendered page count.
             var finalRenderStopwatch = Stopwatch.StartNew();
-            chargePreview = _chargingService.PreviewCharge(request, numberOfPages);
-            (previewPdf, numberOfPages)=_pdfService.GenerateStatement(statement, chargePreview);
+            chargePreview = await _chargingService.PreviewCharge(request, numberOfPages);
+            (previewPdf, numberOfPages) = _pdfService.GenerateStatement(statement, chargePreview);
             numberOfPages = _pdfService.CountPages(previewPdf);
             finalRenderStopwatch.Stop();
             renderLoopStopwatch.Stop();
@@ -169,7 +166,6 @@ namespace BankStatementAPI.Controllers
                 }
                 else
                 {
-                    // Fallback to showing the raw account number when lookup fails
                     accountToChargeName = accountToChargeNumber;
                     accountToChargeBalance = 0m;
                 }
@@ -205,12 +201,10 @@ namespace BankStatementAPI.Controllers
         {
             var totalStopwatch = Stopwatch.StartNew();
 
-             // Extract UserId from JWT claims — never trust the frontend for identity
-    var userIdClaim = User.FindFirstValue("userId");
-    if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
-    {
-        return Unauthorized(new { message = "Invalid token. Please login again." });
-    }
+            // Extract UserId from JWT claims — never trust the frontend for identity
+            var userIdClaim = User.FindFirstValue("userId");
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                return Unauthorized(new { message = "Invalid token. Please login again." });
 
             // Step 1 — Validate request
             var validation = ValidateRequest(request);
@@ -287,14 +281,12 @@ namespace BankStatementAPI.Controllers
             {
                 // Fallback path for clients that do not send preview token.
                 var (_, fallbackPages) = _pdfService.GenerateStatement(
-    statement, new ChargingResult { TotalCharge = 0 });
-numberOfPages = fallbackPages;
+                    statement, new ChargingResult { TotalCharge = 0 });
+                numberOfPages = fallbackPages;
             }
 
             // Step 5 — Process charge (actually debits account)
-            var chargingResult = await _chargingService.ProcessCharge(
-                request, numberOfPages
-            );
+            var chargingResult = await _chargingService.ProcessCharge(request, numberOfPages);
 
             // Step 6 — Stop if charge failed
             if (chargingResult.Status == ChargeStatus.Failed)
@@ -306,13 +298,12 @@ numberOfPages = fallbackPages;
 
             // Step 7 — Generate PDF
             var pdfStopwatch = Stopwatch.StartNew();
-          byte[] pdf = cachedPreviewPdf ?? _pdfService.GenerateStatement(statement, chargingResult).PdfBytes;            pdfStopwatch.Stop();
+            byte[] pdf = cachedPreviewPdf ?? _pdfService.GenerateStatement(statement, chargingResult).PdfBytes;
+            pdfStopwatch.Stop();
             _logger.LogInformation(
                 "Statement generation PDF step completed in {ElapsedMs} ms for account {AccountNumber}",
                 pdfStopwatch.ElapsedMilliseconds,
                 request.AccountNumber);
-
-
 
             try
             {
@@ -328,15 +319,13 @@ numberOfPages = fallbackPages;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to log audit statement for account {AccountNumber}", 
+                _logger.LogError(ex, "Failed to log audit statement for account {AccountNumber}",
                     request.AccountNumber);
                 // Keep statement generation successful even if audit insert fails.
             }
 
             if (!string.IsNullOrEmpty(previewToken))
-            {
                 _memoryCache.Remove(BuildPreviewCacheKey(previewToken));
-            }
 
             totalStopwatch.Stop();
             _logger.LogInformation(
@@ -376,7 +365,6 @@ numberOfPages = fallbackPages;
             public string RequestSignature { get; init; } = string.Empty;
         }
 
-        // Validates the incoming request
         private IActionResult? ValidateRequest(StatementRequestDTO request)
         {
             if (string.IsNullOrEmpty(request.AccountNumber))
@@ -434,24 +422,10 @@ numberOfPages = fallbackPages;
             );
 
             if (!startIsValid || !endIsValid)
-            {
-                return (
-                    false,
-                    default,
-                    default,
-                    "Invalid date format. Use yyyy-MM-dd or dd-MM-yyyy."
-                );
-            }
+                return (false, default, default, "Invalid date format. Use yyyy-MM-dd or dd-MM-yyyy.");
 
             if (startDate > endDate)
-            {
-                return (
-                    false,
-                    default,
-                    default,
-                    "Start date cannot be later than end date."
-                );
-            }
+                return (false, default, default, "Start date cannot be later than end date.");
 
             return (true, startDate, endDate, string.Empty);
         }

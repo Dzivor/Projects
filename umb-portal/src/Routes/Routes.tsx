@@ -8,6 +8,7 @@ import { AdminLayout } from "../layouts/AdminLayout";
 import AdminOverview from "../pages/admin/AdminOverview";
 import UserManagement from "../pages/admin/UserManagement";
 import AuditLogs from "../pages/admin/AuditLogs";
+import Settings from "../pages/admin/Settings";
 
 const AppRoutes = () => {
   return (
@@ -45,6 +46,17 @@ const AppRoutes = () => {
           <AdminRoute>
             <AdminLayout>
               <AuditLogs />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+
+      <Route
+        path="/admin/settings"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <Settings />
             </AdminLayout>
           </AdminRoute>
         }

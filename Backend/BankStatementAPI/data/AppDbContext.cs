@@ -11,6 +11,8 @@ namespace BankStatementAPI.Data
         }
         public DbSet<User> Users { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<AppSetting> AppSettings { get; set; }
+        public DbSet<SettingsAuditLog> SettingsAuditLogs { get; set; }
 
       //configuring table names and relationships if needed
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -22,6 +24,14 @@ namespace BankStatementAPI.Data
                 entity.Property(e => e.AmountCharged).HasPrecision(18, 2);
 
                 entity.HasOne(a => a.User).WithMany(u => u.AuditLogs).HasForeignKey(a => a.UserId);
+            });
+
+            modelBuilder.Entity<AppSetting>(entity =>
+            {
+                entity.HasIndex(s => s.Key).IsUnique();
+                entity.HasMany(s => s.AuditLogs)
+                      .WithOne(a => a.AppSetting)
+                      .HasForeignKey(a => a.AppSettingId);
             });
 
             //Configure User table

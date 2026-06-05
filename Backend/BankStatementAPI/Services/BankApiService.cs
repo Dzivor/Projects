@@ -10,11 +10,13 @@ namespace BankStatementAPI.Services
 
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _config;
+        private readonly SettingsService _settingsService;
 
-        public BankApiService(HttpClient httpClient, IConfiguration config)
+        public BankApiService(HttpClient httpClient, IConfiguration config, SettingsService settingsService)
         {
             _httpClient = httpClient;
             _config = config;
+            _settingsService = settingsService;
         }
 
         // ─────────────────────────────────────────
@@ -323,7 +325,9 @@ namespace BankStatementAPI.Services
             try
             {
                 string baseUrl = _config["BankApi:BaseUrl"]!;
-                string url = $"{baseUrl}/party/payments/createGenericTransfer";
+                // statementCharge contract (see Postman collection "Statement Charge")
+                string url = $"{baseUrl}/party//account/statementCharge";
+
 
                 var request = new HttpRequestMessage(HttpMethod.Post, url);
                 AddBankApiHeaders(request, channel);
@@ -333,12 +337,15 @@ namespace BankStatementAPI.Services
                     header = new { },
                     body = new
                     {
-                        transactionType = "AC",
+                        transactionType = "ACST",
                         debitAccountId = accountNumber,
                         debitCurrency = "GHS",
                         debitAmount = amount,
-                        // Credit account read from config — never hardcoded
-                        creditAccountId = _config["BankApi:ChargeCollectionAccount"]
+                        // Credit account read from settings with config fallback
+                        creditAccountId = await _settingsService
+                            .GetSettingValue(
+                                "ChargeCollectionAccount",
+                                _config["BankApi:ChargeCollectionAccount"] ?? "")
                     }
                 };
 

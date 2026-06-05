@@ -10,11 +10,13 @@ namespace BankStatementAPI.Controllers
     public class AdminController : ControllerBase
     {
         private readonly AdminService _adminService;
+        private readonly SettingsService _settingsService;
         private readonly ILogger<AdminController> _logger;
 
-        public AdminController(AdminService adminService, ILogger<AdminController> logger)
+        public AdminController(AdminService adminService, SettingsService settingsService, ILogger<AdminController> logger)
         {
             _adminService = adminService;
+            _settingsService = settingsService;
             _logger = logger;
         }
 
@@ -143,6 +145,76 @@ namespace BankStatementAPI.Controllers
             {
                 _logger.LogError(ex, "Error in AdminController.{MethodName}: {Message}", nameof(GetAuditLogs), ex.Message);
                 return StatusCode(500, new { message = "An error occurred while loading audit logs." });
+            }
+        }
+
+        [HttpGet("settings")]
+        public async Task<IActionResult> GetSettings()
+        {
+            var denied = CheckAdminAccess();
+            if (denied != null) return denied;
+
+            try
+            {
+                var result = await _settingsService.GetAllSettings();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in AdminController.{MethodName}: {Message}", nameof(GetSettings), ex.Message);
+                return StatusCode(500, new { message = "An error occurred while loading settings." });
+            }
+        }
+
+        [HttpGet("settings/history")]
+        public async Task<IActionResult> GetSettingsHistory()
+        {
+            var denied = CheckAdminAccess();
+            if (denied != null) return denied;
+
+            try
+            {
+                var result = await _settingsService.GetSettingsHistory();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in AdminController.{MethodName}: {Message}", nameof(GetSettingsHistory), ex.Message);
+                return StatusCode(500, new { message = "An error occurred while loading settings history." });
+            }
+        }
+
+        [HttpPut("settings/{key}")]
+        public async Task<IActionResult> UpdateSetting(string key, [FromBody] UpdateSettingRequestDTO request)
+        {
+            var denied = CheckAdminAccess();
+            if (denied != null) return denied;
+
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return BadRequest(new { message = "Setting key is required" });
+            }
+
+            if (request == null || string.IsNullOrWhiteSpace(request.Value))
+            {
+                return BadRequest(new { message = "Setting value is required" });
+            }
+
+            try
+            {
+                var result = await _settingsService.UpdateSetting(key, request, GetAdminUsername());
+
+                if (!result.Success)
+                {
+                    return BadRequest(new { message = result.Message });
+                }
+
+                return Ok(result.Setting);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in AdminController.{MethodName}: {Message}", nameof(UpdateSetting), ex.Message);
+                return StatusCode(500, new { message = "An error occurred while updating the setting." });
             }
         }
 

@@ -23,7 +23,7 @@ body,
 
   .bg-astek-pattern-panel {
     background-image:
-      linear-gradient(to bottom, rgb(255 255 255 / 1), rgb(255 255 255 / 0.6)),
+      linear-gradient(to bottom, rgb(255 255 255 / 1), rgb(255 255 255 / 0.4)),
       url("/Astek%20Patern-02.png");
     background-size: cover;
     background-position: center;

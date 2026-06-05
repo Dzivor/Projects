@@ -6,12 +6,12 @@ namespace BankStatementAPI.Services
     public class ChargingService
     {
         private readonly BankApiService _bankApiService;
-        private readonly IConfiguration _config;
+        private readonly SettingsService _settingsService;
 
-        public ChargingService(BankApiService bankApiService, IConfiguration config)
+        public ChargingService(BankApiService bankApiService, SettingsService settingsService)
         {
             _bankApiService = bankApiService;
-            _config = config;
+            _settingsService = settingsService;
         }
 
         // ─────────────────────────────────────────
@@ -20,13 +20,12 @@ namespace BankStatementAPI.Services
         // Used to show user what they will be charged
         // ─────────────────────────────────────────
 
-        public ChargingResult PreviewCharge(
+        public async Task<ChargingResult> PreviewCharge(
             StatementRequestDTO request,
             int numberOfPages)
         {
-            decimal chargePerPage = _config.GetValue<decimal>(
-                "Charging:VisaChargePerPage"
-            );
+            decimal chargePerPage = await _settingsService
+                .GetDecimalSetting("VisaChargePerPage", 12.00m);
 
             // Rule 1 — ESB is always free
             if (request.Channel.ToUpper() == "ESB")
@@ -85,7 +84,7 @@ namespace BankStatementAPI.Services
             int numberOfPages)
         {
             // Step 1 — Calculate what the charge will be
-            var preview = PreviewCharge(request, numberOfPages);
+            var preview = await PreviewCharge(request, numberOfPages);
 
             // Step 2 — If free or waived no further action needed
             if (preview.Status == ChargeStatus.Free ||

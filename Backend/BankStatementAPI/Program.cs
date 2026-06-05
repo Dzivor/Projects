@@ -58,6 +58,7 @@ builder.Services.AddDbContext<AppDbContext>((DbContextOptionsBuilder options) =>
 //custom services
 builder.Services.AddScoped<BankApiService>();
 builder.Services.AddScoped<ChargingService>();
+builder.Services.AddScoped<SettingsService>();
 builder.Services.AddScoped<PdfService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AuditService>();
@@ -84,6 +85,12 @@ builder.Services.AddCors(options =>
 //build
 
 var app= builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var settingsService = scope.ServiceProvider.GetRequiredService<SettingsService>();
+    await settingsService.SeedDefaultSettings(builder.Configuration);
+}
 
 // Log database connection on startup
 try

@@ -322,7 +322,7 @@ const VisaStatement = () => {
   };
 
   return (
-    <main className="relative min-h-screen text-slate-50 bg-astek-pattern">
+    <main className="relative min-h-screen text-slate-50 bg-astek-pattern-panel">
       <div className="absolute left-6 top-6 z-10">
         <BackButton />
       </div>
@@ -339,7 +339,7 @@ const VisaStatement = () => {
       </div>
 
       <div className="flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-3xl rounded-2xl border border-white/30 bg-astek-pattern-panel p-6 text-slate-900 shadow-md backdrop-blur-sm sm:p-8">
+        <div className="w-full max-w-3xl rounded-2xl bg-astek-pattern-panel p-6 text-slate-900 shadow-md backdrop-blur-sm sm:p-8">
           <div className="text-center py-8 px-4">
             <h2 className="text-3xl font-bold tracking-[0.18em] text-slate-950 drop-shadow-sm sm:text-4xl">
               VISA STATEMENT.

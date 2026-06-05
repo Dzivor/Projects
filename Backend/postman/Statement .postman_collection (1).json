@@ -1,0 +1,884 @@
+{
+  "info": {
+    "_postman_id": "604ebf2b-0e1f-467b-8597-4be5c8083182",
+    "name": "Statement ",
+    "description": "Account Statement ",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "25614949",
+    "_collection_link": "https://go.postman.co/collection/25614949-604ebf2b-0e1f-467b-8597-4be5c8083182?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "get Account Statement All",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "description": "Username and password to authenticate the API against core-banking.",
+            "key": "credentials",
+            "value": "{{signOn}}"
+          },
+          {
+            "description": "Identifier of the lead company of the underlying Entity/Company/Branch for the respective contract for customer data protection purposes. Example US0010001.",
+            "key": "companyId",
+            "value": "<string>",
+            "disabled": true
+          },
+          {
+            "description": "Identifies the device type",
+            "key": "deviceId",
+            "value": "<string>",
+            "disabled": true
+          },
+          {
+            "description": "User who initiated the transaction",
+            "key": "userRole",
+            "value": "<string>",
+            "disabled": true
+          },
+          {
+            "description": "Indicates the pagination header attributes availability. If set to 'true', it fetches all the data",
+            "key": "disablePagination",
+            "value": "<boolean>"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl2}}/party/account/getAccountStatements.2.1.0?accountNumber=1110001267011&startDate=20230801&endDate=20230930",
+          "host": [
+            "{{baseUrl2}}"
+          ],
+          "path": [
+            "party",
+            "account",
+            "getAccountStatements.2.1.0"
+          ],
+          "query": [
+            {
+              "key": "accountNumber",
+              "value": "1110001267011",
+              "description": "(Required) Identifier of the account. Often referred to as the account number, yet for consistency this is always referred to as accountId. Accepts both IBAN & BBAN"
+            },
+            {
+              "key": "startDate",
+              "value": "20230801",
+              "description": "Contains the date on which the transaction or payment gets initiated."
+            },
+            {
+              "key": "endDate",
+              "value": "20230930",
+              "description": "Indicates the date till which the transaction history requested. If 20120101 is the start date and 20120201 is the end date, all transactions that are booked between January 1 to February 1 2012 are returned"
+            },
+            {
+              "key": "page_size",
+              "value": "<integer>",
+              "description": "The total number of records per page",
+              "disabled": true
+            },
+            {
+              "key": "page_start",
+              "value": "<integer>",
+              "description": "The record from which the response should be displayed",
+              "disabled": true
+            },
+            {
+              "key": "page_token",
+              "value": "<string>",
+              "description": "Unique id expected to get as part of response from Transact on every enquiry request",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Account Statement New"
+      },
+      "response": [
+        {
+          "name": "AccountStatementResponse",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "description": "Username and password to authenticate the API against core-banking.",
+                "key": "credentials",
+                "value": "<string>"
+              },
+              {
+                "description": "Identifier of the lead company of the underlying Entity/Company/Branch for the respective contract for customer data protection purposes. Example US0010001.",
+                "key": "companyId",
+                "value": "<string>"
+              },
+              {
+                "description": "Identifies the device type",
+                "key": "deviceId",
+                "value": "<string>"
+              },
+              {
+                "description": "User who initiated the transaction",
+                "key": "userRole",
+                "value": "<string>"
+              },
+              {
+                "description": "Indicates the pagination header attributes availability. If set to 'true', it fetches all the data",
+                "key": "disablePagination",
+                "value": "<boolean>"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "description": "Added as a part of security scheme: basic",
+                "key": "Authorization",
+                "value": "Basic <credentials>"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/party/account/getAccountStatements.2.1.0?accountNumber=<string>&startDate=<string>&endDate=<string>&page_size=<integer>&page_start=<integer>&page_token=<string>",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "party",
+                "account",
+                "getAccountStatements.2.1.0"
+              ],
+              "query": [
+                {
+                  "description": "(Required) Identifier of the account. Often referred to as the account number, yet for consistency this is always referred to as accountId. Accepts both IBAN & BBAN",
+                  "key": "accountNumber",
+                  "value": "<string>"
+                },
+                {
+                  "description": "Contains the date on which the transaction or payment gets initiated.",
+                  "key": "startDate",
+                  "value": "<string>"
+                },
+                {
+                  "description": "Indicates the date till which the transaction history requested. If 20120101 is the start date and 20120201 is the end date, all transactions that are booked between January 1 to February 1 2012 are returned",
+                  "key": "endDate",
+                  "value": "<string>"
+                },
+                {
+                  "description": "The total number of records per page",
+                  "key": "page_size",
+                  "value": "<integer>"
+                },
+                {
+                  "description": "The record from which the response should be displayed",
+                  "key": "page_start",
+                  "value": "<integer>"
+                },
+                {
+                  "description": "Unique id expected to get as part of response from Transact on every enquiry request",
+                  "key": "page_token",
+                  "value": "<string>"
+                }
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"header\": {\n    \"status\": \"<string>\",\n    \"audit\": {\n      \"T24_time\": \"<integer>\",\n      \"versionNumber\": \"<string>\",\n      \"requestParse_time\": \"<number>\",\n      \"responseParse_time\": \"<number>\"\n    },\n    \"page_size\": \"<integer>\",\n    \"page_start\": \"<integer>\",\n    \"total_size\": \"<integer>\",\n    \"page_token\": \"<string>\",\n    \"data\": {\n      \"todayDate\": \"<string>\",\n      \"accountNumber\": \"<string>\",\n      \"accountTitle\": \"<string>\",\n      \"accountType\": \"<string>\",\n      \"currency\": \"<string>\",\n      \"branch\": \"<string>\",\n      \"residentialAddress\": \"<string>\",\n      \"street\": \"<string>\",\n      \"postalAddress\": \"<string>\",\n      \"openingBalance\": \"<string>\",\n      \"totalDebit\": \"<string>\",\n      \"totalCredit\": \"<string>\",\n      \"clearedBalance\": \"<string>\",\n      \"totalAmount\": \"<string>\"\n    }\n  },\n  \"body\": [\n    {\n      \"descriptions\": [\n        {\n          \"description\": \"<string>\"\n        },\n        {\n          \"description\": \"<string>\"\n        }\n      ],\n      \"bookingDate\": \"<date>\",\n      \"reference\": \"<string>\",\n      \"transactionType\": \"<string>\",\n      \"valueDate\": \"<string>\",\n      \"debitAmount\": \"<string>\",\n      \"creditAmount\": \"<string>\",\n      \"closingBalance\": \"<string>\"\n    },\n    {\n      \"descriptions\": [\n        {\n          \"description\": \"<string>\"\n        },\n        {\n          \"description\": \"<string>\"\n        }\n      ],\n      \"bookingDate\": \"<date>\",\n      \"reference\": \"<string>\",\n      \"transactionType\": \"<string>\",\n      \"valueDate\": \"<string>\",\n      \"debitAmount\": \"<string>\",\n      \"creditAmount\": \"<string>\",\n      \"closingBalance\": \"<string>\"\n    }\n  ]\n}"
+        },
+        {
+          "name": "BusinessQueryErrorResponse",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "description": "Username and password to authenticate the API against core-banking.",
+                "key": "credentials",
+                "value": "<string>"
+              },
+              {
+                "description": "Identifier of the lead company of the underlying Entity/Company/Branch for the respective contract for customer data protection purposes. Example US0010001.",
+                "key": "companyId",
+                "value": "<string>"
+              },
+              {
+                "description": "Identifies the device type",
+                "key": "deviceId",
+                "value": "<string>"
+              },
+              {
+                "description": "User who initiated the transaction",
+                "key": "userRole",
+                "value": "<string>"
+              },
+              {
+                "description": "Indicates the pagination header attributes availability. If set to 'true', it fetches all the data",
+                "key": "disablePagination",
+                "value": "<boolean>"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "description": "Added as a part of security scheme: basic",
+                "key": "Authorization",
+                "value": "Basic <credentials>"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/party/account/getAccountStatements.2.1.0?accountNumber=<string>&startDate=<string>&endDate=<string>&page_size=<integer>&page_start=<integer>&page_token=<string>",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "party",
+                "account",
+                "getAccountStatements.2.1.0"
+              ],
+              "query": [
+                {
+                  "description": "(Required) Identifier of the account. Often referred to as the account number, yet for consistency this is always referred to as accountId. Accepts both IBAN & BBAN",
+                  "key": "accountNumber",
+                  "value": "<string>"
+                },
+                {
+                  "description": "Contains the date on which the transaction or payment gets initiated.",
+                  "key": "startDate",
+                  "value": "<string>"
+                },
+                {
+                  "description": "Indicates the date till which the transaction history requested. If 20120101 is the start date and 20120201 is the end date, all transactions that are booked between January 1 to February 1 2012 are returned",
+                  "key": "endDate",
+                  "value": "<string>"
+                },
+                {
+                  "description": "The total number of records per page",
+                  "key": "page_size",
+                  "value": "<integer>"
+                },
+                {
+                  "description": "The record from which the response should be displayed",
+                  "key": "page_start",
+                  "value": "<integer>"
+                },
+                {
+                  "description": "Unique id expected to get as part of response from Transact on every enquiry request",
+                  "key": "page_token",
+                  "value": "<string>"
+                }
+              ]
+            }
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"header\": {\n    \"status\": \"<string>\",\n    \"audit\": {\n      \"T24_time\": \"<integer>\",\n      \"versionNumber\": \"<string>\",\n      \"requestParse_time\": \"<number>\",\n      \"responseParse_time\": \"<number>\"\n    }\n  },\n  \"error\": {\n    \"code\": \"<string>\",\n    \"message\": \"<string>\",\n    \"type\": \"<string>\"\n  }\n}"
+        },
+        {
+          "name": "SystemQueryErrorResponse",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "description": "Username and password to authenticate the API against core-banking.",
+                "key": "credentials",
+                "value": "<string>"
+              },
+              {
+                "description": "Identifier of the lead company of the underlying Entity/Company/Branch for the respective contract for customer data protection purposes. Example US0010001.",
+                "key": "companyId",
+                "value": "<string>"
+              },
+              {
+                "description": "Identifies the device type",
+                "key": "deviceId",
+                "value": "<string>"
+              },
+              {
+                "description": "User who initiated the transaction",
+                "key": "userRole",
+                "value": "<string>"
+              },
+              {
+                "description": "Indicates the pagination header attributes availability. If set to 'true', it fetches all the data",
+                "key": "disablePagination",
+                "value": "<boolean>"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "description": "Added as a part of security scheme: basic",
+                "key": "Authorization",
+                "value": "Basic <credentials>"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/party/account/getAccountStatements.2.1.0?accountNumber=<string>&startDate=<string>&endDate=<string>&page_size=<integer>&page_start=<integer>&page_token=<string>",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "party",
+                "account",
+                "getAccountStatements.2.1.0"
+              ],
+              "query": [
+                {
+                  "description": "(Required) Identifier of the account. Often referred to as the account number, yet for consistency this is always referred to as accountId. Accepts both IBAN & BBAN",
+                  "key": "accountNumber",
+                  "value": "<string>"
+                },
+                {
+                  "description": "Contains the date on which the transaction or payment gets initiated.",
+                  "key": "startDate",
+                  "value": "<string>"
+                },
+                {
+                  "description": "Indicates the date till which the transaction history requested. If 20120101 is the start date and 20120201 is the end date, all transactions that are booked between January 1 to February 1 2012 are returned",
+                  "key": "endDate",
+                  "value": "<string>"
+                },
+                {
+                  "description": "The total number of records per page",
+                  "key": "page_size",
+                  "value": "<integer>"
+                },
+                {
+                  "description": "The record from which the response should be displayed",
+                  "key": "page_start",
+                  "value": "<integer>"
+                },
+                {
+                  "description": "Unique id expected to get as part of response from Transact on every enquiry request",
+                  "key": "page_token",
+                  "value": "<string>"
+                }
+              ]
+            }
+          },
+          "status": "Internal Server Error",
+          "code": 500,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"header\": {\n    \"status\": \"<string>\",\n    \"audit\": {\n      \"T24_time\": \"<integer>\",\n      \"versionNumber\": \"<string>\",\n      \"requestParse_time\": \"<number>\",\n      \"responseParse_time\": \"<number>\"\n    }\n  },\n  \"error\": {\n    \"code\": \"<string>\",\n    \"message\": \"<string>\",\n    \"type\": \"<string>\"\n  }\n}"
+        },
+        {
+          "name": "QueryErrorResponse",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "description": "Username and password to authenticate the API against core-banking.",
+                "key": "credentials",
+                "value": "<string>"
+              },
+              {
+                "description": "Identifier of the lead company of the underlying Entity/Company/Branch for the respective contract for customer data protection purposes. Example US0010001.",
+                "key": "companyId",
+                "value": "<string>"
+              },
+              {
+                "description": "Identifies the device type",
+                "key": "deviceId",
+                "value": "<string>"
+              },
+              {
+                "description": "User who initiated the transaction",
+                "key": "userRole",
+                "value": "<string>"
+              },
+              {
+                "description": "Indicates the pagination header attributes availability. If set to 'true', it fetches all the data",
+                "key": "disablePagination",
+                "value": "<boolean>"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "description": "Added as a part of security scheme: basic",
+                "key": "Authorization",
+                "value": "Basic <credentials>"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/party/account/getAccountStatements.2.1.0?accountNumber=<string>&startDate=<string>&endDate=<string>&page_size=<integer>&page_start=<integer>&page_token=<string>",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "party",
+                "account",
+                "getAccountStatements.2.1.0"
+              ],
+              "query": [
+                {
+                  "description": "(Required) Identifier of the account. Often referred to as the account number, yet for consistency this is always referred to as accountId. Accepts both IBAN & BBAN",
+                  "key": "accountNumber",
+                  "value": "<string>"
+                },
+                {
+                  "description": "Contains the date on which the transaction or payment gets initiated.",
+                  "key": "startDate",
+                  "value": "<string>"
+                },
+                {
+                  "description": "Indicates the date till which the transaction history requested. If 20120101 is the start date and 20120201 is the end date, all transactions that are booked between January 1 to February 1 2012 are returned",
+                  "key": "endDate",
+                  "value": "<string>"
+                },
+                {
+                  "description": "The total number of records per page",
+                  "key": "page_size",
+                  "value": "<integer>"
+                },
+                {
+                  "description": "The record from which the response should be displayed",
+                  "key": "page_start",
+                  "value": "<integer>"
+                },
+                {
+                  "description": "Unique id expected to get as part of response from Transact on every enquiry request",
+                  "key": "page_token",
+                  "value": "<string>"
+                }
+              ]
+            }
+          },
+          "status": "Internal Server Error",
+          "code": 500,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"header\": {\n    \"status\": \"<string>\",\n    \"audit\": {\n      \"T24_time\": \"<integer>\",\n      \"versionNumber\": \"<string>\",\n      \"requestParse_time\": \"<number>\",\n      \"responseParse_time\": \"<number>\"\n    }\n  },\n  \"error\": {\n    \"code\": \"<string>\",\n    \"message\": \"<string>\",\n    \"type\": \"<string>\"\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Statement Charge",
+      "protocolProfileBehavior": {
+        "disabledSystemHeaders": {}
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "credentials",
+            "value": "{{signOn}}",
+            "description": "Username and password to authenticate the API against core-banking."
+          },
+          {
+            "key": "companyId",
+            "value": "{{company}}",
+            "description": "Identifier of the lead company of the underlying Entity/Company/Branch for the respective contract for customer data protection purposes. Example US0010001."
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "deviceId",
+            "value": "u",
+            "description": "Identifies the device type",
+            "disabled": true
+          },
+          {
+            "key": "userRole",
+            "value": "u",
+            "description": "User who initiated the transaction",
+            "disabled": true
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"header\":{\n},\n  \"body\": {\n    \"paymentDetails\": [\n      {\n        \"paymentDetail\": \"Test payment\"\n      },\n      {\n        \"paymentDetail\": \"-Test payment\"\n      }\n    ],\n    \"orderingBanks\": [\n      {\n        \"orderingBank\": \"UMB\"\n      }\n    ],\n    \"transactionType\": \"ACST\",\n    \"debitAccountId\": \"1110936160011\",\n    \"debitCurrency\": \"GHS\",\n    \"debitAmount\": 1,\n    \"debitValueDate\": \"\",\n    \"creditAccountId\": \"GHS1003300010001\",\n    \"creditCurrency\": \"\",\n    \"creditAmount\": \"\",\n    \"creditValueDate\": \"\",\n    \"processingDate\": \"\",\n    \"branch\": \"\",\n    \"statusEnquiry\": \"20230620097\",\n    \"commissionType\": \"ACMMPULLPER\",\n    \"sessionId\": \"\",\n    \"rrNumber\": \"0123456772345\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ProdUrl}}/party//account/statementCharge?validate_only=true",
+          "host": [
+            "{{ProdUrl}}"
+          ],
+          "path": [
+            "party",
+            "",
+            "account",
+            "statementCharge"
+          ],
+          "query": [
+            {
+              "key": "validate_only",
+              "value": "true"
+            }
+          ]
+        },
+        "description": "createGenericTransfer"
+      },
+      "response": [
+        {
+          "name": "createGenericTransfer",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "description": "Username and password to authenticate the API against core-banking.",
+                "key": "credentials",
+                "value": "{{signOn}}"
+              },
+              {
+                "description": "Identifier of the lead company of the underlying Entity/Company/Branch for the respective contract for customer data protection purposes. Example US0010001.",
+                "key": "companyId",
+                "value": "{{company}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "Identifies the device type",
+                "key": "deviceId",
+                "value": "u",
+                "disabled": true
+              },
+              {
+                "description": "User who initiated the transaction",
+                "key": "userRole",
+                "value": "u",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"header\": {\n  },\n  \"body\": {\n    \"paymentDetails\": [\n      {\n        \"paymentDetail\": \"Payment details 1\"\n      },\n      {\n        \"paymentDetail\": \"Payment details 2\"\n      }\n    ],\n    \"orderingBanks\": [\n      {\n        \"orderingBank\": \"Ordering bank details 1\"\n      },\n      {\n        \"orderingBank\": \"Ordering bank details 2\"\n      }\n    ],\n    \"overrides\": [\n      {\n        \"override\": \"override1\"\n      },\n      {\n        \"override\": \"override2\"\n      }\n    ],\n    \"transactionType\": \"AC\",\n    \"debitAccountId\": \"0000000100667\",\n    \"debitCurrency\": \"GHS\",\n    \"debitAmount\": 16.34,\n    \"debitValueDate\": \"\",\n    \"creditAccountId\": \"1000000608\",\n    \"creditCurrency\": \"\",\n    \"creditAmount\": \"\",\n    \"creditValueDate\": \"\",\n    \"chequeNumber\": \"\",\n    \"processingDate\": \"\",\n    \"branch\": \"\",\n    \"extensions\": {}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/party/payments/createGenericTransfer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "party",
+                "payments",
+                "createGenericTransfer"
+              ],
+              "query": [
+                {
+                  "key": "validate_only",
+                  "value": "true",
+                  "description": "The identifier to indicate if it is set to only validate or not.",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            },
+            {
+              "key": "Access-Control-Allow-Headers",
+              "value": "Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers"
+            },
+            {
+              "key": "Date",
+              "value": "Mon, 13 Feb 2023 12:57:21 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Access-Control-Allow-Origin",
+              "value": "*"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Access-Control-Allow-Methods",
+              "value": "GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS, CONNECT, PATCH"
+            },
+            {
+              "key": "Access-Control-Max-Age",
+              "value": "3600"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"header\": {\n        \"transactionStatus\": \"Live\",\n        \"audit\": {\n            \"T24_time\": 729,\n            \"responseParse_time\": 4,\n            \"requestParse_time\": 8,\n            \"versionNumber\": \"1\"\n        },\n        \"id\": \"FT22265SJC32\",\n        \"status\": \"success\"\n    },\n    \"body\": {\n        \"transactionType\": \"AC\",\n        \"debitValueDate\": \"2022-09-22\",\n        \"orderingBanks\": [\n            {\n                \"orderingBank\": \"Ordering bank details 1\"\n            },\n            {\n                \"orderingBank\": \"Ordering bank details 2\"\n            }\n        ],\n        \"debitCurrency\": \"GHS\",\n        \"processingDate\": \"2022-09-22\",\n        \"creditValueDate\": \"2022-09-22\",\n        \"debitAccountId\": \"0000000100667\",\n        \"debitAmount\": 16.34,\n        \"creditAccountId\": \"1000000608\",\n        \"creditCurrency\": \"GHS\",\n        \"paymentDetails\": [\n            {\n                \"paymentDetail\": \"Payment details 1\"\n            },\n            {\n                \"paymentDetail\": \"Payment details 2\"\n            }\n        ]\n    }\n}"
+        }
+      ]
+    },
+    {
+      "name": "umb Get Acct Info",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "credentials",
+            "value": "{{signOn}}",
+            "description": "Username and password to authenticate the API against core-banking."
+          },
+          {
+            "key": "companyId",
+            "value": "{{company}}",
+            "description": "Identifier of the lead company of the underlying Entity/Company/Branch for the respective contract for customer data protection purposes. Example US0010001."
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "deviceId",
+            "value": "u",
+            "description": "Identifies the device type",
+            "disabled": true
+          },
+          {
+            "key": "userRole",
+            "value": "u",
+            "description": "User who initiated the transaction",
+            "disabled": true
+          },
+          {
+            "key": "disablePagination",
+            "value": "false",
+            "description": "Indicates the pagination header attributes availability. If set to 'true', it fetches all the data",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{ProdUrl}}/party/umbGetAcctInfo/?accountNo=1110936160011",
+          "host": [
+            "{{ProdUrl}}"
+          ],
+          "path": [
+            "party",
+            "umbGetAcctInfo",
+            ""
+          ],
+          "query": [
+            {
+              "key": "accountNo",
+              "value": "1110936160011",
+              "description": "(Required) "
+            },
+            {
+              "key": "page_size",
+              "value": "-34694340",
+              "description": "The total number of records per page",
+              "disabled": true
+            },
+            {
+              "key": "page_start",
+              "value": "-34694340",
+              "description": "The record from which the response should be displayed",
+              "disabled": true
+            },
+            {
+              "key": "page_token",
+              "value": "u",
+              "description": "Unique id expected to get as part of response from Transact on every enquiry request",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "umbGetAcctInfo"
+      },
+      "response": [
+        {
+          "name": "umb Get Acct Info",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "description": "Username and password to authenticate the API against core-banking.",
+                "key": "credentials",
+                "value": "{{signOn}}"
+              },
+              {
+                "description": "Identifier of the lead company of the underlying Entity/Company/Branch for the respective contract for customer data protection purposes. Example US0010001.",
+                "key": "companyId",
+                "value": "{{company}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "description": "Identifies the device type",
+                "key": "deviceId",
+                "value": "u",
+                "disabled": true
+              },
+              {
+                "description": "User who initiated the transaction",
+                "key": "userRole",
+                "value": "u",
+                "disabled": true
+              },
+              {
+                "description": "Indicates the pagination header attributes availability. If set to 'true', it fetches all the data",
+                "key": "disablePagination",
+                "value": "false",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/party/umbGetAcctInfo/?accountNo=1000000608",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "party",
+                "umbGetAcctInfo",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "accountNo",
+                  "value": "1000000608",
+                  "description": "(Required) "
+                },
+                {
+                  "key": "page_size",
+                  "value": "-34694340",
+                  "description": "The total number of records per page",
+                  "disabled": true
+                },
+                {
+                  "key": "page_start",
+                  "value": "-34694340",
+                  "description": "The record from which the response should be displayed",
+                  "disabled": true
+                },
+                {
+                  "key": "page_token",
+                  "value": "u",
+                  "description": "Unique id expected to get as part of response from Transact on every enquiry request",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            },
+            {
+              "key": "Access-Control-Allow-Headers",
+              "value": "Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers"
+            },
+            {
+              "key": "Date",
+              "value": "Mon, 13 Feb 2023 12:22:38 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Access-Control-Allow-Origin",
+              "value": "*"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Access-Control-Allow-Methods",
+              "value": "GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS, CONNECT, PATCH"
+            },
+            {
+              "key": "Access-Control-Max-Age",
+              "value": "3600"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"header\": {\n        \"audit\": {\n            \"T24_time\": 369,\n            \"responseParse_time\": 4,\n            \"requestParse_time\": 10\n        },\n        \"page_start\": 1,\n        \"page_token\": \"202209224280544558.01,99\",\n        \"total_size\": 1,\n        \"page_size\": 99,\n        \"status\": \"success\"\n    },\n    \"body\": [\n        {\n            \"accountStatus\": \"ACTIVE\",\n            \"country\": \"GH\",\n            \"accountType\": \"20\",\n            \"name\": \"FRANK TEST\",\n            \"customerID\": \"100282\",\n            \"branchName\": \"UMB - HEAD OFFICE\",\n            \"currency\": \"GHS\",\n            \"accountNumber\": \"1000000608\",\n            \"accountBalance\": \"219641.11\",\n            \"successIndicator\": \"Success\"\n        }\n    ]\n}"
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "basic",
+    "basic": [
+      {
+        "key": "username",
+        "value": "{{basicAuthUsername}}",
+        "type": "string"
+      },
+      {
+        "key": "password",
+        "value": "{{basicAuthPassword}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://api.server.com/api/v1.0.0"
+    }
+  ]
+}

@@ -60,6 +60,7 @@ export const AdminLayout: React.FC<Props> = ({ children }) => {
             "Audit Logs",
             <ClipboardList size={16} />,
           )}
+          {navItem("/admin/settings", "Settings", <FileText size={16} />)}
         </nav>
       </aside>
 
