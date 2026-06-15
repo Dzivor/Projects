@@ -140,8 +140,8 @@ if (enableHttpsRedirection)
 //Register our custom auth middleware
 app.UseMiddleware<AuthMiddleware>();
 
-app.UseAuthentication();
-app.UseAuthorization();
+//app.UseAuthentication();
+//app.UseAuthorization();
 
 
 //map controllers

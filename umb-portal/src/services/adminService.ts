@@ -116,6 +116,34 @@ export interface AuditLogFilters {
   accountNumber?: string;
 }
 
+export interface AuditLogChargeDrillDownDTO {
+  debitAccountNumber: string;
+  creditAccountNumber: string;
+  statementAccountNumber: string;
+  bankTransactionReference?: string | null;
+  narration: string;
+  completedAt?: string | null;
+}
+
+export interface AuditLogDrillDownDTO {
+  id: number;
+  staffFullName: string;
+  staffUsername: string;
+  accountNumber: string;
+  accountHolderName: string;
+  startDate: string;
+  endDate: string;
+  channelUsed: string;
+  numberOfPages: number;
+  amountCharged: number;
+  accountCharged: string;
+  wasWaived: boolean;
+  bankTransactionReference?: string | null;
+  generatedAt: string;
+  charge?: AuditLogChargeDrillDownDTO | null;
+  chargeMessage?: string | null;
+}
+
 export interface AppSettingDTO {
   id: number;
   key: string;
@@ -277,6 +305,22 @@ export const getAuditLogs = async (
   }
 };
 
+export const getAuditLogDrillDown = async (
+  id: number,
+): Promise<AuditLogDrillDownDTO> => {
+  try {
+    const resp = await axios.get<AuditLogDrillDownDTO>(
+      `${API_BASE_URL}/api/admin/audit-logs/${id}`,
+      { headers: getAuthHeader() },
+    );
+    return resp.data;
+  } catch (err: unknown) {
+    const statusCode = getStatusFromError(err);
+    if (statusCode !== null) handleAuthError(statusCode);
+    throw err;
+  }
+};
+
 const downloadBlob = (blob: Blob, filename: string) => {
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -394,6 +438,7 @@ const adminService = {
   addUser,
   toggleUser,
   getAuditLogs,
+  getAuditLogDrillDown,
   exportExcel,
   exportPdf,
   getSettings,

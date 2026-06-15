@@ -56,10 +56,24 @@ function Login() {
           setErrorMessage(result.message ?? "Login failed. Please try again.");
         } else {
           // Success — store auth data and navigate
+          // Normalize admin flag so frontend route gating can't break due to naming/casing.
+          const normalizedIsAdmin = (() => {
+            const raw = (result as unknown as { isAdmin?: unknown }).isAdmin;
+            if (raw === true || raw === "true" || raw === 1) return true;
+            if (raw === false || raw === "false" || raw === 0 || raw == null)
+              return false;
+
+            // Fallback for backend responses that might come through with different casing.
+            const anyResult = result as unknown as Record<string, unknown>;
+            const raw2 = anyResult.IsAdmin ?? anyResult.isAdmin;
+            if (raw2 === true || raw2 === "true" || raw2 === 1) return true;
+            return false;
+          })();
+
           const authUser = {
             ...result,
             firstName: getFirstName(result.fullName ?? ""),
-            isAdmin: result.isAdmin ?? false,
+            isAdmin: normalizedIsAdmin,
           };
           localStorage.setItem("authToken", result.token);
           localStorage.setItem("authUser", JSON.stringify(authUser));

@@ -285,8 +285,11 @@ namespace BankStatementAPI.Controllers
                 numberOfPages = fallbackPages;
             }
 
+            // StaffUsername comes from JWT claims — never from request body
+            var staffUsername = User.FindFirstValue(ClaimTypes.Name) ?? "";
+
             // Step 5 — Process charge (actually debits account)
-            var chargingResult = await _chargingService.ProcessCharge(request, numberOfPages);
+            var chargingResult = await _chargingService.ProcessCharge(request, numberOfPages, staffUsername);
 
             // Step 6 — Stop if charge failed
             if (chargingResult.Status == ChargeStatus.Failed)

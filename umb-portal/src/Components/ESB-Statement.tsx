@@ -265,7 +265,7 @@ const ESBStatement = () => {
         </button>
       </div>
       <div className="flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-3xl rounded-2xl  bg-astek-pattern-panel p-6 text-slate-900 shadow-md backdrop-blur-sm sm:p-8">
+        <div className="w-full max-w-3xl rounded-2xl  bg-white p-6 text-slate-900 shadow-md backdrop-blur-sm sm:p-8">
           <div className="text-center py-8 px-4">
             <h1 className="text-3xl font-bold tracking-[0.18em] text-slate-950 drop-shadow-sm sm:text-4xl">
               ESB STATEMENT

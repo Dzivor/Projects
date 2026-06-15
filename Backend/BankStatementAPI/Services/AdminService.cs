@@ -3,6 +3,7 @@ using BankStatementAPI.DTOs;
 using BankStatementAPI.Models;
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -12,15 +13,19 @@ namespace BankStatementAPI.Services
 {
     public class AdminService
     {
+private const int DefaultLatestStatementsCount = 10;
+        private static readonly TimeSpan AuditLogsCacheTtl = TimeSpan.FromMinutes(5);
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
         private readonly ILogger<AdminService> _logger;
+        private readonly IMemoryCache _cache;
 
-        public AdminService(AppDbContext context, IConfiguration config, ILogger<AdminService> logger)
+        public AdminService(AppDbContext context, IConfiguration config, ILogger<AdminService> logger, IMemoryCache cache)
         {
             _context = context;
             _config = config;
             _logger = logger;
+            _cache = cache;
             QuestPDF.Settings.License = LicenseType.Community;
         }
 
@@ -31,6 +36,7 @@ namespace BankStatementAPI.Services
                 DateTime todayStart = DateTime.UtcNow.Date;
                 DateTime tomorrowStart = todayStart.AddDays(1);
                 DateTime firstDayOfMonth = new DateTime(todayStart.Year, todayStart.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+                DateTime firstDayOfNextMonth = firstDayOfMonth.AddMonths(1);
 
                 var todayLogsQuery = _context.AuditLogs.AsNoTracking()
                     .Where(a => a.GeneratedAt >= todayStart && a.GeneratedAt < tomorrowStart);
@@ -41,13 +47,36 @@ namespace BankStatementAPI.Services
                 int totalUsers = await _context.Users.AsNoTracking().CountAsync();
                 int activeUsers = await _context.Users.AsNoTracking().CountAsync(u => u.IsActive);
                 int disabledUsers = await _context.Users.AsNoTracking().CountAsync(u => !u.IsActive);
+
                 int statementsToday = await todayLogsQuery.CountAsync();
                 int statementsTodayVisa = await todayLogsQuery.CountAsync(a => a.ChannelUsed.ToUpper() == "VISA");
                 int statementsTodayEsb = await todayLogsQuery.CountAsync(a => a.ChannelUsed.ToUpper() == "ESB");
                 decimal chargesToday = await todayLogsQuery.SumAsync(a => (decimal?)a.AmountCharged) ?? 0m;
+
                 int statementsThisMonth = await monthLogsQuery.CountAsync();
                 decimal chargesThisMonth = await monthLogsQuery.SumAsync(a => (decimal?)a.AmountCharged) ?? 0m;
 
+                // Charge transaction stats (from ChargeTransactions table)
+                var todayChargesQuery = _context.ChargeTransactions.AsNoTracking()
+                    .Where(c => c.CreatedAt >= todayStart && c.CreatedAt < tomorrowStart);
+
+                var monthChargesQuery = _context.ChargeTransactions.AsNoTracking()
+                    .Where(c => c.CreatedAt >= firstDayOfMonth && c.CreatedAt < firstDayOfNextMonth);
+
+                int chargeAttemptsToday = await todayChargesQuery.CountAsync();
+                int chargeSuccessesToDay = await todayChargesQuery.CountAsync(c => c.Status == ChargeTransactionStatus.Success);
+                int chargeFailuresToday = await todayChargesQuery.CountAsync(c => c.Status == ChargeTransactionStatus.Failed);
+                decimal chargeSuccessAmountToday = await todayChargesQuery
+                    .Where(c => c.Status == ChargeTransactionStatus.Success)
+                    .SumAsync(c => (decimal?)c.Amount) ?? 0m;
+
+                int chargeAttemptsThisMonth = await monthChargesQuery.CountAsync();
+                int chargeFailuresThisMonth = await monthChargesQuery.CountAsync(c => c.Status == ChargeTransactionStatus.Failed);
+                decimal chargeSuccessAmountThisMonth = await monthChargesQuery
+                    .Where(c => c.Status == ChargeTransactionStatus.Success)
+                    .SumAsync(c => (decimal?)c.Amount) ?? 0m;
+
+                // Most active staff (existing dashboard logic)
                 var monthlyLogs = await _context.AuditLogs.AsNoTracking()
                     .Include(a => a.User)
                     .Where(a => a.GeneratedAt >= firstDayOfMonth)
@@ -84,6 +113,15 @@ namespace BankStatementAPI.Services
                     ChargesToday = chargesToday,
                     StatementsThisMonth = statementsThisMonth,
                     ChargesThisMonth = chargesThisMonth,
+
+                    ChargeAttemptsToday = chargeAttemptsToday,
+                    ChargeSuccessesToDay = chargeSuccessesToDay,
+                    ChargeFailuresToday = chargeFailuresToday,
+                    ChargeAttemptsThisMonth = chargeAttemptsThisMonth,
+                    ChargeFailuresThisMonth = chargeFailuresThisMonth,
+                    ChargeSuccessAmountToday = chargeSuccessAmountToday,
+                    ChargeSuccessAmountThisMonth = chargeSuccessAmountThisMonth,
+
                     MostActiveStaff = topStaff
                 };
             }
@@ -271,7 +309,9 @@ namespace BankStatementAPI.Services
 
                 if (user.IsAdmin && user.IsActive)
                 {
-                    int activeAdminCount = await _context.Users.CountAsync(currentUser => currentUser.IsAdmin && currentUser.IsActive);
+                    int activeAdminCount = await _context.Users
+                        .CountAsync(currentUser => currentUser.IsAdmin && currentUser.IsActive);
+
                     if (activeAdminCount <= 1)
                     {
                         return (false, "Cannot disable the last active admin", null);
@@ -297,21 +337,50 @@ namespace BankStatementAPI.Services
         {
             try
             {
+                filter ??= new AuditLogFilterDTO();
+
+                bool hasAnyFilterExceptDates = !string.IsNullOrWhiteSpace(filter.StaffUsername) ||
+                                               !string.IsNullOrWhiteSpace(filter.Channel) ||
+                                               !string.IsNullOrWhiteSpace(filter.AccountNumber);
+
+                bool hasAnyDateFilter = filter.StartDate.HasValue || filter.EndDate.HasValue;
+
+                bool useDefaultLatestOnly = !hasAnyDateFilter; // default applies whenever dates are not provided
+
+                // Build cache key from all query-affecting filter parameters + default/latest behavior.
+                string cacheKey = $"auditlogs:v1:start={filter.StartDate?.ToString("yyyy-MM-dd") ?? ""};end={filter.EndDate?.ToString("yyyy-MM-dd") ?? ""};staff={filter.StaffUsername?.Trim().ToLowerInvariant() ?? ""};channel={filter.Channel?.Trim().ToUpperInvariant() ?? ""};acct={filter.AccountNumber?.Trim() ?? ""};defaultLatest={useDefaultLatestOnly}";
+
+                if (_cache.TryGetValue(cacheKey, out List<AuditLogDTO>? cached) && cached is not null)
+                {
+                    return cached;
+                }
+
                 var query = _context.AuditLogs
                     .AsNoTracking()
                     .Include(auditLog => auditLog.User)
                     .AsQueryable();
 
+
                 if (filter.StartDate.HasValue)
                 {
-                    query = query.Where(auditLog => auditLog.GeneratedAt >= filter.StartDate.Value);
+                    var startDate = filter.StartDate.Value.Date;
+                    query = query.Where(auditLog => auditLog.GeneratedAt.Date >= startDate);
                 }
 
                 if (filter.EndDate.HasValue)
                 {
-                    DateTime endDate = filter.EndDate.Value.Date.AddDays(1).AddTicks(-1);
-                    query = query.Where(auditLog => auditLog.GeneratedAt <= endDate);
+                    var endDate = filter.EndDate.Value.Date;
+                    query = query.Where(auditLog => auditLog.GeneratedAt.Date <= endDate);
                 }
+
+                // If no date filters were provided, we only return the latest N audit log rows.
+                // Any non-date filters (staff/channel/account) are still applied to limit the result set.
+                if (useDefaultLatestOnly)
+                {
+                    query = query.OrderByDescending(auditLog => auditLog.GeneratedAt);
+                    query = query.Take(DefaultLatestStatementsCount);
+                }
+
 
                 if (!string.IsNullOrWhiteSpace(filter.StaffUsername))
                 {
@@ -331,11 +400,14 @@ namespace BankStatementAPI.Services
                     query = query.Where(auditLog => auditLog.AccountNumber.Contains(cleanAccountNumber));
                 }
 
-                var logs = await query
-                    .OrderByDescending(auditLog => auditLog.GeneratedAt)
-                    .ToListAsync();
+                if (!useDefaultLatestOnly)
+                {
+                    query = query.OrderByDescending(auditLog => auditLog.GeneratedAt);
+                }
 
-                return logs.Select(log => new AuditLogDTO
+                var logs = await query.ToListAsync();
+
+                var dtos = logs.Select(log => new AuditLogDTO
                 {
                     Id = log.Id,
                     StaffFullName = log.User?.FullName ?? "",
@@ -351,8 +423,12 @@ namespace BankStatementAPI.Services
                     WasWaived = log.WasWaived,
                     GeneratedAt = log.GeneratedAt
                 }).ToList();
+
+                _cache.Set(cacheKey, dtos, AuditLogsCacheTtl);
+                return dtos;
             }
             catch (Exception ex)
+
             {
                 _logger.LogError(ex, "Error in AdminService.{MethodName}: {Message}", nameof(GetAuditLogs), ex.Message);
                 throw;
@@ -406,9 +482,7 @@ namespace BankStatementAPI.Services
                     worksheet.Cell(rowIndex, 9).Value = log.WasWaived ? "Yes" : "No";
 
                     if (isEvenRow)
-                    {
                         worksheet.Range(rowIndex, 1, rowIndex, 9).Style.Fill.BackgroundColor = XLColor.FromHtml("#FAFAFA");
-                    }
 
                     rowIndex++;
                 }
@@ -531,6 +605,74 @@ namespace BankStatementAPI.Services
             }
         }
 
+        // NEW: ChargeTransactions admin listing
+        public async Task<List<ChargeTransactionDTO>> GetChargeTransactions(
+            DateTime? startDate,
+            DateTime? endDate,
+            string? staffUsername,
+            string? status,
+            string? accountNumber)
+        {
+            try
+            {
+                var query = _context.ChargeTransactions.AsNoTracking().AsQueryable();
+
+                if (startDate.HasValue)
+                    query = query.Where(c => c.CreatedAt >= startDate.Value);
+
+                if (endDate.HasValue)
+                {
+                    DateTime end = endDate.Value.Date.AddDays(1).AddTicks(-1);
+                    query = query.Where(c => c.CreatedAt <= end);
+                }
+
+                if (!string.IsNullOrWhiteSpace(staffUsername))
+                {
+                    string clean = staffUsername.Trim().ToLowerInvariant();
+                    query = query.Where(c => c.StaffUsername.ToLower() == clean);
+                }
+
+                if (!string.IsNullOrWhiteSpace(status))
+                {
+                    string cleanStatus = status.Trim().ToLowerInvariant();
+                    query = query.Where(c => c.Status.ToString().ToLower() == cleanStatus);
+                }
+
+                if (!string.IsNullOrWhiteSpace(accountNumber))
+                {
+                    string clean = accountNumber.Trim();
+                    query = query.Where(c => c.StatementAccountNumber.Contains(clean));
+                }
+
+                var rows = await query
+                    .OrderByDescending(c => c.CreatedAt)
+                    .ToListAsync();
+
+                return rows.Select(c => new ChargeTransactionDTO
+                {
+                    Id = c.Id,
+                    DebitAccountNumber = c.DebitAccountNumber,
+                    CreditAccountNumber = c.CreditAccountNumber,
+                    Amount = c.Amount,
+                    Channel = c.Channel,
+                    StatementAccountNumber = c.StatementAccountNumber,
+                    BankTransactionReference = c.BankTransactionReference,
+                    Status = c.Status.ToString().ToLower(),
+                    ErrorMessage = c.ErrorMessage,
+                    StaffUsername = c.StaffUsername,
+                    Narration = c.Narration,
+                    CreatedAt = c.CreatedAt,
+                    CompletedAt = c.CompletedAt,
+                    AuditLogId = c.AuditLogId
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in AdminService.{MethodName}: {Message}", nameof(GetChargeTransactions), ex.Message);
+                throw;
+            }
+        }
+
         private static AdminUserDTO ToAdminUserDto(User user)
         {
             return new AdminUserDTO
@@ -556,5 +698,81 @@ namespace BankStatementAPI.Services
         {
             cell.BorderBottom(0.5f).Padding(4).Text(text);
         }
+
+        // NEW: Drill-down details for a single audit log row
+        public async Task<AuditLogDrillDownDTO?> GetAuditLogDrillDown(int id)
+        {
+            var log = await _context.AuditLogs
+                .AsNoTracking()
+                .Include(a => a.User)
+                .Include(a => a.ChargeTransactions)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (log == null)
+                return null;
+
+            // Prefer the charge transaction created for this log.
+            // (AuditLog has a navigation collection, populated by the Include above.)
+            var charge = log.ChargeTransactions
+                .OrderByDescending(c => c.Id)
+                .FirstOrDefault();
+
+            var dto = new AuditLogDrillDownDTO
+            {
+                Id = log.Id,
+                StaffFullName = log.User?.FullName ?? "",
+                StaffUsername = log.User?.Username ?? "",
+                AccountNumber = log.AccountNumber,
+                AccountHolderName = log.AccountHolderName,
+                StartDate = log.StartDate,
+                EndDate = log.EndDate,
+                ChannelUsed = log.ChannelUsed,
+                NumberOfPages = log.NumberOfPages,
+                AmountCharged = log.AmountCharged,
+                AccountCharged = log.AccountCharged,
+                WasWaived = log.WasWaived,
+                BankTransactionReference = log.BankTransactionReference,
+                GeneratedAt = log.GeneratedAt,
+                Charge = null,
+                ChargeMessage = null
+            };
+
+            bool isEsb = string.Equals(log.ChannelUsed, "ESB", StringComparison.OrdinalIgnoreCase);
+
+            if (charge == null)
+            {
+                // ESB: no charges attempted
+                if (isEsb)
+                {
+                    dto.ChargeMessage = "No charge applicable-ESB channel";
+                }
+                // Waived: charge attempted but waived (or charge record not present)
+                else if (log.WasWaived)
+                {
+                    dto.ChargeMessage = "Charged waived";
+                }
+                else
+                {
+                    dto.ChargeMessage = "No charge applicable";
+                }
+
+                return dto;
+            }
+
+            // When a charge transaction exists, populate charge drill-down fields.
+            dto.Charge = new AuditLogChargeDrillDownDTO
+            {
+                DebitAccountNumber = charge.DebitAccountNumber,
+                CreditAccountNumber = charge.CreditAccountNumber,
+                StatementAccountNumber = charge.StatementAccountNumber,
+                BankTransactionReference = charge.BankTransactionReference,
+                Narration = charge.Narration,
+                CompletedAt = charge.CompletedAt
+            };
+
+            return dto;
+        }
     }
 }
+
+

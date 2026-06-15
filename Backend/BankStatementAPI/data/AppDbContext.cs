@@ -13,6 +13,8 @@ namespace BankStatementAPI.Data
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<AppSetting> AppSettings { get; set; }
         public DbSet<SettingsAuditLog> SettingsAuditLogs { get; set; }
+        public DbSet<ChargeTransaction> ChargeTransactions { get; set; }
+
 
       //configuring table names and relationships if needed
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -33,6 +35,19 @@ namespace BankStatementAPI.Data
                       .WithOne(a => a.AppSetting)
                       .HasForeignKey(a => a.AppSettingId);
             });
+
+            //Configure ChargeTransaction table
+            modelBuilder.Entity<ChargeTransaction>(entity =>
+            {
+                entity.Property(e => e.Amount).HasPrecision(18, 2);
+
+                entity.HasOne(c => c.AuditLog)
+                      .WithMany(a => a.ChargeTransactions)
+                      .HasForeignKey(c => c.AuditLogId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+            });
+
 
             //Configure User table
             modelBuilder.Entity<User>(entity =>

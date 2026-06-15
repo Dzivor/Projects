@@ -1,6 +1,8 @@
 using BankStatementAPI.Models;
+
 using BankStatementAPI.Data;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 namespace BankStatementAPI.Services
 {
@@ -14,7 +16,7 @@ namespace BankStatementAPI.Services
         }
 
         // Logs a statement generation to the database
-        public async Task LogStatement(
+        public async Task<int> LogStatement(
             int userId,
             string accountNumber,
             string accountHolderName,
@@ -23,27 +25,52 @@ namespace BankStatementAPI.Services
             string channelUsed,
             ChargingResult chargingResult)
         {
-            var log = new AuditLog
+            try
             {
-                UserId = userId,
-                AccountNumber = accountNumber,
-                AccountHolderName = accountHolderName,
+                var log = new AuditLog
+                {
+                    UserId = userId,
+                    AccountNumber = accountNumber,
+                    AccountHolderName = accountHolderName,
 
-                // Convert DateTime to DateOnly
-                // since AuditLog uses DateOnly for dates
-                StartDate = DateOnly.FromDateTime(startDate),
-                EndDate = DateOnly.FromDateTime(endDate),
+                    StartDate = DateOnly.FromDateTime(startDate),
+                    EndDate = DateOnly.FromDateTime(endDate),
 
-                ChannelUsed = channelUsed,
-                NumberOfPages = chargingResult.NumberOfPages,
-                AmountCharged = chargingResult.TotalCharge,
-                AccountCharged = chargingResult.AccountCharged ?? "",
-                WasWaived = chargingResult.Status == ChargeStatus.Waived,
-                GeneratedAt = DateTime.UtcNow
-            };
+                    ChannelUsed = channelUsed,
+                    NumberOfPages = chargingResult.NumberOfPages,
+                    AmountCharged = chargingResult.TotalCharge,
+                    AccountCharged = chargingResult.AccountCharged ?? "",
+                    WasWaived = chargingResult.Status == ChargeStatus.Waived,
+                    BankTransactionReference = chargingResult.BankTransactionReference,
+                    GeneratedAt = DateTime.UtcNow
+                };
 
-            _context.AuditLogs.Add(log);
-            await _context.SaveChangesAsync();
+                _context.AuditLogs.Add(log);
+                await _context.SaveChangesAsync();
+
+                // Link ChargeTransaction to this AuditLog
+                if (chargingResult.ChargeTransactionId.HasValue)
+                {
+                    var chargeLog = await _context.ChargeTransactions
+                        .FirstOrDefaultAsync(c => c.Id == chargingResult.ChargeTransactionId.Value);
+
+                    if (chargeLog != null)
+                    {
+                        chargeLog.AuditLogId = log.Id;
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                return log.Id;
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Error(ex, "Failed to log AuditLog for account {AccountNumber}", accountNumber);
+
+                Serilog.Log.Error(ex, "Failed to log AuditLog for account {AccountNumber}", accountNumber);
+
+                throw;
+            }
         }
 
         // Returns all audit logs ordered by most recent first

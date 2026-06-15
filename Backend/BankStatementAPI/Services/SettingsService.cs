@@ -174,6 +174,27 @@ namespace BankStatementAPI.Services
                     Value = "30",
                     Description = "JWT token expiry time in minutes",
                     DataType = "int"
+                },
+                new AppSetting
+                {
+                    Key = "BankApi:Username",
+                    Value = config["BankApi:Username"] ?? "",
+                    Description = "Bank API username for authentication",
+                    DataType = "string"
+                },
+                new AppSetting
+                {
+                    Key = "BankApi:Password",
+                    Value = config["BankApi:Password"] ?? "",
+                    Description = "Bank API password for authentication",
+                    DataType = "password"
+                },
+                new AppSetting
+                {
+                    Key = "BankApi:SignOn",
+                    Value = config["BankApi:SignOn"] ?? "",
+                    Description = "Bank API SignOn (T24 sign-on) sent in the credentials header",
+                    DataType = "string"
                 }
             };
 

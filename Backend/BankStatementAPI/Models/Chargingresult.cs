@@ -12,6 +12,9 @@ namespace BankStatementAPI.Models
 
         public string? BankTransactionReference { get; set; }
 
+        // ID of the ChargeTransaction row created for this attempt
+        public int? ChargeTransactionId { get; set; }
+
         public bool WasReversed { get; set; }
     }
 }

@@ -1,7 +1,13 @@
 import React, { useEffect, useState, useCallback } from "react";
 import adminService from "../../services/adminService";
-import type { AuditLogDTO, AuditLogFilters } from "../../services/adminService";
+import type {
+  AuditLogDTO,
+  AuditLogDrillDownDTO,
+  AuditLogFilters,
+} from "../../services/adminService";
 import { FileSpreadsheet, FileText } from "lucide-react";
+import AuditLogDrillDownModal from "./AuditLogDrillDownModal";
+
 import {
   formatDate,
   formatDateTime,
@@ -12,6 +18,10 @@ import { useToast } from "../../Components/Toast";
 const AuditLogs: React.FC = () => {
   const [logs, setLogs] = useState<AuditLogDTO[]>([]);
   const [loading, setLoading] = useState(true);
+  const [drillOpen, setDrillOpen] = useState(false);
+  const [drillLoading, setDrillLoading] = useState(false);
+  const [drillData, setDrillData] = useState<AuditLogDrillDownDTO | null>(null);
+
   const [filters, setFilters] = useState<AuditLogFilters>({});
   const { showToast } = useToast();
 
@@ -31,31 +41,39 @@ const AuditLogs: React.FC = () => {
   );
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      void loadLogs();
-    }, 0);
-    return () => clearTimeout(timeoutId);
+    void loadLogs();
   }, [loadLogs]);
 
   const applyFilters = () => loadLogs(filters);
+
   const resetFilters = () => {
     setFilters({});
     loadLogs();
   };
 
+  const [exportLoading, setExportLoading] = useState(false);
+
   const exportExcel = async () => {
+    if (exportLoading) return;
+    setExportLoading(true);
     try {
       await adminService.exportExcel(filters);
     } catch {
       showToast("Unable to download Excel", "error");
+    } finally {
+      setExportLoading(false);
     }
   };
 
   const exportPdf = async () => {
+    if (exportLoading) return;
+    setExportLoading(true);
     try {
       await adminService.exportPdf(filters);
     } catch {
       showToast("Unable to download PDF", "error");
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -96,14 +114,18 @@ const AuditLogs: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={exportExcel}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm flex items-center gap-2"
+              disabled={exportLoading}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm flex items-center gap-2 disabled:opacity-60"
             >
               <FileSpreadsheet /> Excel
             </button>
             <button
+              type="button"
               onClick={exportPdf}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm flex items-center gap-2"
+              disabled={exportLoading}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm flex items-center gap-2 disabled:opacity-60"
             >
               <FileText /> PDF
             </button>
@@ -201,10 +223,35 @@ const AuditLogs: React.FC = () => {
                   className="border-b border-gray-50 hover:bg-gray-50"
                 >
                   <td className="py-3 px-4">
-                    <div className="font-medium">{l.staffFullName}</div>
-                    <div className="text-sm text-gray-500">
-                      {l.staffUsername}
-                    </div>
+                    <button
+                      type="button"
+                      className="text-left w-full"
+                      onClick={() => {
+                        void (async () => {
+                          setDrillLoading(true);
+                          setDrillOpen(true);
+                          try {
+                            const data =
+                              await adminService.getAuditLogDrillDown(l.id);
+                            setDrillData(data);
+                          } catch {
+                            setDrillOpen(false);
+                            setDrillData(null);
+                            showToast(
+                              "Unable to load audit log details",
+                              "error",
+                            );
+                          } finally {
+                            setDrillLoading(false);
+                          }
+                        })();
+                      }}
+                    >
+                      <div className="font-medium">{l.staffFullName}</div>
+                      <div className="text-sm text-gray-500">
+                        {l.staffUsername}
+                      </div>
+                    </button>
                   </td>
                   <td className="py-3 px-4">
                     <div className="font-mono text-sm">{l.accountNumber}</div>
@@ -244,6 +291,16 @@ const AuditLogs: React.FC = () => {
             </tbody>
           </table>
         )}
+
+        <AuditLogDrillDownModal
+          isOpen={drillOpen}
+          isLoading={drillLoading}
+          data={drillData}
+          onClose={() => {
+            setDrillOpen(false);
+            setDrillData(null);
+          }}
+        />
       </div>
     </div>
   );

@@ -11,6 +11,16 @@ namespace BankStatementAPI.DTOs
         public decimal ChargesToday { get; set; }
         public int StatementsThisMonth { get; set; }
         public decimal ChargesThisMonth { get; set; }
+
+        // Charge transaction stats
+        public int ChargeAttemptsToday { get; set; }
+        public int ChargeSuccessesToDay { get; set; }
+        public int ChargeFailuresToday { get; set; }
+        public int ChargeAttemptsThisMonth { get; set; }
+        public int ChargeFailuresThisMonth { get; set; }
+        public decimal ChargeSuccessAmountToday { get; set; }
+        public decimal ChargeSuccessAmountThisMonth { get; set; }
+
         public List<StaffActivityDTO> MostActiveStaff { get; set; } = new();
     }
 

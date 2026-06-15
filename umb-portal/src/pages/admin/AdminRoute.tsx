@@ -10,14 +10,21 @@ export function AdminRoute({ children }: AdminRouteProps) {
 
   if (!raw) return <Navigate to="/" replace />;
 
-  let user: { isAdmin?: boolean };
+  let user: { isAdmin?: unknown };
   try {
-    user = JSON.parse(raw) as { isAdmin?: boolean };
+    user = JSON.parse(raw) as { isAdmin?: unknown };
   } catch {
     return <Navigate to="/" replace />;
   }
 
-  if (user.isAdmin !== true) return <Navigate to="/welcome" replace />;
+  const isAdminNormalized = (() => {
+    if (user.isAdmin === true) return true;
+    if (user.isAdmin === "true") return true;
+    if (user.isAdmin === 1) return true;
+    return false;
+  })();
+
+  if (!isAdminNormalized) return <Navigate to="/welcome" replace />;
 
   return <>{children}</>;
 }

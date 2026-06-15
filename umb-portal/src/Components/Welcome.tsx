@@ -8,6 +8,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { logoutUser } from "../services/session";
+import bgPattern from "../assets/Astek Patern-02.png";
 
 const getWelcomeName = (): string => {
   const authUserRaw = localStorage.getItem("authUser");
@@ -126,7 +127,13 @@ function Welcome() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#f3f4f6] px-4 py-6 sm:px-6 lg:px-8">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(circle_at_top,rgba(239,159,39,0.18)_0%,rgba(239,159,39,0.08)_26%,rgba(243,244,246,0)_68%)]" />
+      <img
+        src={bgPattern}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="absolute inset-0 bg-slate-950/55 pointer-events-none " />
 
       <div className="relative mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-5xl items-center justify-center">
         <div className="absolute right-0 top-0 z-20" ref={accountMenuRef}>

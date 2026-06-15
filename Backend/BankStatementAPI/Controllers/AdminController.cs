@@ -124,6 +124,29 @@ namespace BankStatementAPI.Controllers
             }
         }
 
+        [HttpGet("audit-logs/{id:int}")]
+        public async Task<IActionResult> GetAuditLogById(int id)
+        {
+            var denied = CheckAdminAccess();
+            if (denied != null) return denied;
+
+            try
+            {
+                var result = await _adminService.GetAuditLogDrillDown(id);
+                if (result == null)
+                {
+                    return NotFound(new { message = "Audit log not found" });
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in AdminController.{MethodName}: {Message}", nameof(GetAuditLogById), ex.Message);
+                return StatusCode(500, new { message = "An error occurred while loading audit log details." });
+            }
+        }
+
         [HttpGet("audit-logs")]
         public async Task<IActionResult> GetAuditLogs(
             [FromQuery] DateTime? startDate,
@@ -147,6 +170,7 @@ namespace BankStatementAPI.Controllers
                 return StatusCode(500, new { message = "An error occurred while loading audit logs." });
             }
         }
+
 
         [HttpGet("settings")]
         public async Task<IActionResult> GetSettings()

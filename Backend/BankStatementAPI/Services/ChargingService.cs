@@ -81,7 +81,8 @@ namespace BankStatementAPI.Services
 
         public async Task<ChargingResult> ProcessCharge(
             StatementRequestDTO request,
-            int numberOfPages)
+            int numberOfPages,
+            string staffUsername)
         {
             // Step 1 — Calculate what the charge will be
             var preview = await PreviewCharge(request, numberOfPages);
@@ -139,10 +140,17 @@ namespace BankStatementAPI.Services
             }
 
             // Step 6 — Balance is sufficient — attempt debit
+            // StatementAccountNumber is the statement being printed
+            string statementAccountNumber = request.AccountNumber;
+
+
+
             var debitResult = await _bankApiService.DebitAccount(
                 accountToCharge,
                 requiredCharge,
-                request.Channel
+                request.Channel,
+                statementAccountNumber,
+                staffUsername
             );
 
             // Step 7 — Debit failed
@@ -154,6 +162,8 @@ namespace BankStatementAPI.Services
                     AccountCharged = accountToCharge,
                     Status = ChargeStatus.Failed,
                     NumberOfPages = numberOfPages,
+                    BankTransactionReference = debitResult.TransactionReference,
+                    ChargeTransactionId = debitResult.ChargeTransactionId,
                     Message = debitResult.UserMessage
                         ?? $"Transaction failed on account {accountToCharge}",
                     ErrorDetails = debitResult.ErrorMessage
@@ -168,6 +178,7 @@ namespace BankStatementAPI.Services
                 Status = ChargeStatus.Success,
                 NumberOfPages = numberOfPages,
                 BankTransactionReference = debitResult.TransactionReference,
+                ChargeTransactionId = debitResult.ChargeTransactionId,
                 Message = $"GHS {requiredCharge:N2} successfully charged to " +
                           $"account {accountToCharge}. " +
                           $"Reference: {debitResult.TransactionReference}"
