@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using BankStatementAPI.Helpers;
 
 namespace BankStatementAPI.Models
 {
@@ -16,6 +17,8 @@ namespace BankStatementAPI.Models
         public string BranchName { get; set; } = "";
         public string Currency { get; set; } = "";
         public string AccountNumber { get; set; } = "";
+
+        [JsonConverter(typeof(FlexibleStringConverter))]
         public string AccountBalance { get; set; } = "";
         public string SuccessIndicator { get; set; } = "";
         public string CustomerID { get; set; } = "";
@@ -49,10 +52,17 @@ namespace BankStatementAPI.Models
         public string ResidentialAddress { get; set; } = "";
         public string Street { get; set; } = "";
         public string PostalAddress { get; set; } = "";
+
+        [JsonConverter(typeof(FlexibleStringConverter))]
         public string OpeningBalance { get; set; } = "";
+
+        [JsonConverter(typeof(FlexibleStringConverter))]
         public string TotalDebit { get; set; } = "";
+        [JsonConverter(typeof(FlexibleStringConverter))]
         public string TotalCredit { get; set; } = "";
+        [JsonConverter(typeof(FlexibleStringConverter))]
         public string ClearedBalance { get; set; } = "";
+        [JsonConverter(typeof(FlexibleStringConverter))]
         public string TotalAmount { get; set; } = "";
     }
 
@@ -74,8 +84,11 @@ namespace BankStatementAPI.Models
         public string Reference { get; set; } = "";
         public string TransactionType { get; set; } = "";
         public string ValueDate { get; set; } = "";
+        [JsonConverter(typeof(FlexibleStringConverter))]
         public string DebitAmount { get; set; } = "";
+        [JsonConverter(typeof(FlexibleStringConverter))]
         public string CreditAmount { get; set; } = "";
+        [JsonConverter(typeof(FlexibleStringConverter))]
         public string ClosingBalance { get; set; } = "";
     }
 
