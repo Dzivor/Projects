@@ -11,7 +11,6 @@ namespace BankStatementAPI.DTOs
         public bool ChargeAltAccount { get; set; }      // alt account checkbox
         public string? AltAccountNumber { get; set; }   // optional alt account
         public string? PreviewToken { get; set; }       // token from preview flow
-
-        public string StaffUsername {get; set; } = "";    // for audit logging
+        public int UserId { get; set; }                 // for audit logging
     }
 }

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Projects\\Backend\\BankStatementAPI\\BankStatementAPI.csproj": {}
+    "C:\\Users\\daniel.dzivor\\Projects\\Backend\\BankStatementAPI\\BankStatementAPI.csproj": {}
   },
   "projects": {
-    "C:\\Projects\\Backend\\BankStatementAPI\\BankStatementAPI.csproj": {
+    "C:\\Users\\daniel.dzivor\\Projects\\Backend\\BankStatementAPI\\BankStatementAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Projects\\Backend\\BankStatementAPI\\BankStatementAPI.csproj",
+        "projectUniqueName": "C:\\Users\\daniel.dzivor\\Projects\\Backend\\BankStatementAPI\\BankStatementAPI.csproj",
         "projectName": "BankStatementAPI",
-        "projectPath": "C:\\Projects\\Backend\\BankStatementAPI\\BankStatementAPI.csproj",
+        "projectPath": "C:\\Users\\daniel.dzivor\\Projects\\Backend\\BankStatementAPI\\BankStatementAPI.csproj",
         "packagesPath": "C:\\Users\\daniel.dzivor\\.nuget\\packages\\",
-        "outputPath": "C:\\Projects\\Backend\\BankStatementAPI\\obj\\",
+        "outputPath": "C:\\Users\\daniel.dzivor\\Projects\\Backend\\BankStatementAPI\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\daniel.dzivor\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -23,7 +23,8 @@
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net10.0-windows7.0": {
+          "net10.0-windows": {
+            "framework": "net10.0-windows7.0",
             "targetAlias": "net10.0-windows",
             "projectReferences": {}
           }
@@ -38,15 +39,20 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.300"
       },
       "frameworks": {
-        "net10.0-windows7.0": {
+        "net10.0-windows": {
+          "framework": "net10.0-windows7.0",
           "targetAlias": "net10.0-windows",
           "dependencies": {
+            "ClosedXML": {
+              "target": "Package",
+              "version": "[0.105.0, )"
+            },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
-              "version": "[10.0.6, )"
+              "version": "[10.0.8, )"
             },
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
@@ -54,39 +60,55 @@
             },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
-              "version": "[10.0.6, )"
+              "version": "[10.0.8, )"
             },
             "Microsoft.EntityFrameworkCore.Design": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
               "suppressParent": "All",
               "target": "Package",
-              "version": "[10.0.6, )"
+              "version": "[10.0.8, )"
             },
             "Microsoft.EntityFrameworkCore.SqlServer": {
               "target": "Package",
-              "version": "[10.0.6, )"
+              "version": "[10.0.8, )"
             },
             "Microsoft.EntityFrameworkCore.Tools": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
               "suppressParent": "All",
               "target": "Package",
-              "version": "[10.0.6, )"
+              "version": "[10.0.8, )"
             },
             "Microsoft.Extensions.Http.Polly": {
               "target": "Package",
-              "version": "[10.0.7, )"
+              "version": "[10.0.8, )"
             },
             "QuestPDF": {
               "target": "Package",
-              "version": "[2026.2.4, )"
+              "version": "[2026.5.0, )"
+            },
+            "Serilog.AspNetCore": {
+              "target": "Package",
+              "version": "[10.0.0, )"
+            },
+            "Serilog.Sinks.Console": {
+              "target": "Package",
+              "version": "[6.1.1, )"
+            },
+            "Serilog.Sinks.File": {
+              "target": "Package",
+              "version": "[7.0.0, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[10.1.7, )"
             },
+            "System.DirectoryServices": {
+              "target": "Package",
+              "version": "[10.0.8, )"
+            },
             "System.DirectoryServices.AccountManagement": {
               "target": "Package",
-              "version": "[10.0.6, )"
+              "version": "[10.0.8, )"
             },
             "UglyToad.PdfPig": {
               "target": "Package",
@@ -112,7 +134,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

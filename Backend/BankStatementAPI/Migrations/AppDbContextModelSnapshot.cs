@@ -17,10 +17,49 @@ namespace BankStatementAPI.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.6")
+                .HasAnnotation("ProductVersion", "10.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("BankStatementAPI.Models.AppSetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DataType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("LastUpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("AppSettings");
+                });
 
             modelBuilder.Entity("BankStatementAPI.Models.AuditLog", b =>
                 {
@@ -46,12 +85,15 @@ namespace BankStatementAPI.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("BankTransactionReference")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ChannelUsed")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
 
                     b.Property<DateTime>("GeneratedAt")
                         .HasColumnType("datetime2");
@@ -59,11 +101,62 @@ namespace BankStatementAPI.Migrations
                     b.Property<int>("NumberOfPages")
                         .HasColumnType("int");
 
-                    b.Property<string>("StaffFullName")
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("WasWaived")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AuditLogs");
+                });
+
+            modelBuilder.Entity("BankStatementAPI.Models.ChargeTransaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("AuditLogId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("BankTransactionReference")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Channel")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("StaffId")
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreditAccountNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DebitAccountNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Narration")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -71,15 +164,159 @@ namespace BankStatementAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("StatementAccountNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("WasWaived")
-                        .HasColumnType("bit");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.ToTable("AuditLogs");
+                    b.HasIndex("AuditLogId");
+
+                    b.ToTable("ChargeTransactions");
+                });
+
+            modelBuilder.Entity("BankStatementAPI.Models.SettingsAuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AppSettingId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ChangedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NewValue")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OldValue")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SettingKey")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppSettingId");
+
+                    b.ToTable("SettingsAuditLogs");
+                });
+
+            modelBuilder.Entity("BankStatementAPI.Models.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AddedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Username")
+                        .IsUnique();
+
+                    b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            AddedBy = "Daniel",
+                            CreatedAt = new DateTime(2026, 5, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "Daniel.Dzivor@myumbbank.com",
+                            FullName = "Daniel Dzivor",
+                            IsActive = true,
+                            IsAdmin = false,
+                            Username = "Daniel.Dzivor"
+                        });
+                });
+
+            modelBuilder.Entity("BankStatementAPI.Models.AuditLog", b =>
+                {
+                    b.HasOne("BankStatementAPI.Models.User", "User")
+                        .WithMany("AuditLogs")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BankStatementAPI.Models.ChargeTransaction", b =>
+                {
+                    b.HasOne("BankStatementAPI.Models.AuditLog", "AuditLog")
+                        .WithMany("ChargeTransactions")
+                        .HasForeignKey("AuditLogId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("AuditLog");
+                });
+
+            modelBuilder.Entity("BankStatementAPI.Models.SettingsAuditLog", b =>
+                {
+                    b.HasOne("BankStatementAPI.Models.AppSetting", "AppSetting")
+                        .WithMany("AuditLogs")
+                        .HasForeignKey("AppSettingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AppSetting");
+                });
+
+            modelBuilder.Entity("BankStatementAPI.Models.AppSetting", b =>
+                {
+                    b.Navigation("AuditLogs");
+                });
+
+            modelBuilder.Entity("BankStatementAPI.Models.AuditLog", b =>
+                {
+                    b.Navigation("ChargeTransactions");
+                });
+
+            modelBuilder.Entity("BankStatementAPI.Models.User", b =>
+                {
+                    b.Navigation("AuditLogs");
                 });
 #pragma warning restore 612, 618
         }

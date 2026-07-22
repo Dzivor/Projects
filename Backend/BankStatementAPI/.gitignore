@@ -1,16 +1,19 @@
 # Configuration files
 *.config
-*.json
 *.env
 *.yml
 *.yaml
+appsettings.json
+appsettings.Development.json
+appsettings.Production.json
 
 # Bin folder
 bin/
 obj/
-appsettings.json
-
 # IDE
 .vs/
 .vscode/
 *.user
+publish/
+ProductionBackend/
+ProdNewServer/

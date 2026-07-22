@@ -1,15 +1,13 @@
 import { useFormik } from "formik";
-import { AxiosError } from "axios";
 import { useState } from "react";
-import { useNavigate } from "react-router";
-import { Lock, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Lock, User, Eye, EyeOff } from "lucide-react";
 import bgPattern from "../assets/Astek Patern-02.png";
 import umbLogo from "../assets/umb-logo.jpg";
 import { login } from "../services/auth";
 
 const getFirstName = (fullName: string): string => {
   const firstName = fullName.trim().split(/\s+/)[0];
-
   return firstName || "Guest";
 };
 
@@ -17,7 +15,8 @@ function Login() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  // Control the dev bypass explicitly with VITE_DEV_BYPASS (default: disabled)
+  const [showPassword, setShowPassword] = useState(false);
+
   const isDevBypassEnabled = import.meta.env.VITE_DEV_BYPASS === "true";
 
   const formik = useFormik({
@@ -28,8 +27,8 @@ function Login() {
     onSubmit: async (values) => {
       setErrorMessage("");
       setIsSubmitting(true);
-      // In development mode, bypass actual login for faster testing
 
+      // Dev bypass
       if (isDevBypassEnabled) {
         const devUser = {
           token: "dev-bypass-token",
@@ -38,34 +37,59 @@ function Login() {
           firstName: "Developer",
           expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
         };
-
         localStorage.setItem("authToken", devUser.token);
         localStorage.setItem("authUser", JSON.stringify(devUser));
-
         navigate("/welcome");
         setIsSubmitting(false);
         return;
       }
-      ///////////////////////////////////////////////////////////
+
       try {
         const result = await login(values);
-        const authUser = {
-          ...result,
-          firstName: getFirstName(result.fullName),
-        };
 
-        localStorage.setItem("authToken", result.token);
-        localStorage.setItem("authUser", JSON.stringify(authUser));
-
-        navigate("/welcome");
-      } catch (error) {
-        if (error instanceof AxiosError) {
-          const apiMessage = error.response?.data?.message;
-          setErrorMessage(apiMessage ?? "Login failed. Please try again.");
+        // Use if/else instead of return
+        // so finally always runs correctly
+        if (!result.success || !result.token) {
+          // Any failure — show message and clear storage
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("authUser");
+          setErrorMessage(result.message ?? "Login failed. Please try again.");
         } else {
-          setErrorMessage("Login failed. Please try again.");
+          // Success — store auth data and navigate
+          // Normalize admin flag so frontend route gating can't break due to naming/casing.
+          const normalizedIsAdmin = (() => {
+            const raw = (result as unknown as { isAdmin?: unknown }).isAdmin;
+            if (raw === true || raw === "true" || raw === 1) return true;
+            if (raw === false || raw === "false" || raw === 0 || raw == null)
+              return false;
+
+            // Fallback for backend responses that might come through with different casing.
+            const anyResult = result as unknown as Record<string, unknown>;
+            const raw2 = anyResult.IsAdmin ?? anyResult.isAdmin;
+            if (raw2 === true || raw2 === "true" || raw2 === 1) return true;
+            return false;
+          })();
+
+          const authUser = {
+            ...result,
+            firstName: getFirstName(result.fullName ?? ""),
+            isAdmin: normalizedIsAdmin,
+          };
+          localStorage.setItem("authToken", result.token);
+          localStorage.setItem("authUser", JSON.stringify(authUser));
+          if (authUser.isAdmin) {
+            navigate("/admin");
+          } else {
+            navigate("/welcome");
+          }
         }
+      } catch {
+        // Only for genuine network failures
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("authUser");
+        setErrorMessage("Unable to reach server. Please try again later.");
       } finally {
+        // Always runs — button always re-enabled
         setIsSubmitting(false);
       }
     },
@@ -100,17 +124,25 @@ function Login() {
             />
           </label>
 
-          <label className="flex h-12 items-center gap-4 rounded-full border border-[#bcc2c7] bg-[#ececec] px-6">
+          <label className="flex h-12 items-center gap-4 rounded-full border border-[#bcc2c7] bg-[#ececec] px-4">
             <Lock size={15} className="text-[#697786]" />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               name="password"
               required
               placeholder="Password"
               value={formik.values.password}
               onChange={formik.handleChange}
-              className="w-full bg-transparent text-[20px] font-normal text-[#2f3f53] placeholder:text-[#2f3f53]/90 focus:outline-none"
+              className="flex-1 bg-transparent text-[20px] font-normal text-[#2f3f53] placeholder:text-[#2f3f53]/90 focus:outline-none"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="ml-2 flex h-8 w-8 items-center justify-center rounded-full text-[#697786] hover:bg-slate-200"
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
           </label>
 
           <button

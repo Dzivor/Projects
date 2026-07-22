@@ -12,6 +12,24 @@ body,
 }
 
 @layer utilities {
+  .bg-astek-pattern {
+    background-image:
+      linear-gradient(to bottom, rgb(0 0 0 / 0.7), rgb(0 0 0 / 1)),
+      url("/Astek%20Patern-02.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .bg-astek-pattern-panel {
+    background-image:
+      linear-gradient(to bottom, rgb(255 255 255 / 1), rgb(255 255 255 / 0.4)),
+      url("/Astek%20Patern-02.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
   .bg-umb-pattern {
     background-color: #050505;
     background-image:

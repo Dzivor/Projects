@@ -109,7 +109,7 @@ namespace BankStatementAPI.Services
                             {
                                 header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5)
                                     .Text("Booking Date").Bold();
-                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).PaddingRight(10)
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).PaddingRight(10).AlignCenter()
                                     .Text("Narrative").Bold();
                                 header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).PaddingLeft(8)
                                     .Text("Value Date").Bold();
@@ -117,7 +117,7 @@ namespace BankStatementAPI.Services
                                     .Text("Debit").Bold();
                                 header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).AlignCenter()
                                     .Text("Credit").Bold();
-                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).AlignRight()
+                                header.Cell().BorderTop(1).BorderBottom(1).PaddingVertical(5).AlignCenter()
                                     .Text("Balance").Bold();
                             });
 
@@ -139,7 +139,7 @@ namespace BankStatementAPI.Services
                                     .Text(t.ValueDate.ToString("dd MMM yyyy").ToUpper());
                                 table.Cell().PaddingVertical(transactionRowPadding).AlignCenter()
                                     .Text(t.Debit > 0 ? $"{t.Debit:N2}" : "");
-                                table.Cell().PaddingVertical(transactionRowPadding).AlignLeft()
+                                table.Cell().PaddingVertical(transactionRowPadding).AlignCenter()
                                     .Text(t.Credit > 0 ? $"{t.Credit:N2}" : "");
                                 table.Cell().PaddingVertical(transactionRowPadding).AlignRight()
                                     .Text($"{t.Balance:N2}");

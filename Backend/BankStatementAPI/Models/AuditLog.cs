@@ -6,11 +6,13 @@ namespace BankStatementAPI.Models
     {
         
         public int Id {get; set;}
-        public string StaffUsername{get; set;}="";
-        public string StaffId{get; set;}="";
-        public string StaffFullName {get; set;}="";
-
         
+        
+        // Foreign key- links to Users table
+        public int UserId {get; set;}
+        public User? User {get; set;} 
+
+        //Request details
         public string AccountNumber {get; set;}="";
         public string AccountHolderName{get; set;}="";
         public DateOnly StartDate {get; set;}
@@ -24,16 +26,16 @@ namespace BankStatementAPI.Models
         public string AccountCharged {get; set;} = "";
         public bool WasWaived {get; set;}
 
+        // Bank transaction reference returned by debit endpoint
+        // e.g. "FT22265SJC32" — null if ESB or waived
+        public string? BankTransactionReference { get; set; }
 
-
-       
-
-        public string? BankTransactionReference {get;set;}
-        public bool WasReversed {get; set;}
-
-        public string? ReversalReason {get; set;}
+    
 
  //Timestamp
         public DateTime GeneratedAt {get; set;}=DateTime.UtcNow;
+
+        // Linked charge transactions (created during statement generation)
+        public List<ChargeTransaction> ChargeTransactions { get; set; } = new();
     }
 }

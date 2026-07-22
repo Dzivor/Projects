@@ -9,44 +9,48 @@ namespace BankStatementAPI.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(AuthService authService)
+        public AuthController(AuthService authService, ILogger<AuthController> logger)
         {
             _authService = authService;
+            _logger = logger;
         }
 
-        // POST /api/auth/login
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequestDTO request)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)
         {
             // Validate inputs
             if (string.IsNullOrEmpty(request.Username) ||
                 string.IsNullOrEmpty(request.Password))
             {
-                return BadRequest(new
+                return Ok(new LoginResponseDTO
                 {
-                    message = "Username and password are required"
+                    Success = false,
+                    Message = "Username and password are required."
                 });
             }
 
             try
             {
-                var result = _authService.Login(request);
+                var result = await _authService.Login(request);
+                
 
-                if (result == null)
-                {
-                    return Unauthorized(new { message = "Invalid username or password" });
-                }
-
+                // Always return 200
+                // Frontend reads result.Success to determine what to do
                 return Ok(result);
             }
-            catch (UnauthorizedAccessException)
+            catch (Exception ex)
             {
-                return Unauthorized(new { message = "Invalid username or password" });
-            }
-            catch
-            {
-                return StatusCode(500, new { message = "An error occurred while processing the login." });
+                // Log the exception here when Serilog is added
+                _logger.LogError(ex,
+                 "An error occurred while processing login request for username: {Username}", 
+                 request.Username);
+                return Ok(new LoginResponseDTO
+                {
+                    Success = false,
+                    Message = "An error occurred. Please try again."
+                });
             }
         }
     }

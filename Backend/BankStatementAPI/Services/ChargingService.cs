@@ -6,12 +6,12 @@ namespace BankStatementAPI.Services
     public class ChargingService
     {
         private readonly BankApiService _bankApiService;
-        private readonly IConfiguration _config;
+        private readonly SettingsService _settingsService;
 
-        public ChargingService(BankApiService bankApiService, IConfiguration config)
+        public ChargingService(BankApiService bankApiService, SettingsService settingsService)
         {
             _bankApiService = bankApiService;
-            _config = config;
+            _settingsService = settingsService;
         }
 
         // ─────────────────────────────────────────
@@ -20,13 +20,12 @@ namespace BankStatementAPI.Services
         // Used to show user what they will be charged
         // ─────────────────────────────────────────
 
-        public ChargingResult PreviewCharge(
+        public async Task<ChargingResult> PreviewCharge(
             StatementRequestDTO request,
             int numberOfPages)
         {
-            decimal chargePerPage = _config.GetValue<decimal>(
-                "Charging:VisaChargePerPage"
-            );
+            decimal chargePerPage = await _settingsService
+                .GetDecimalSetting("VisaChargePerPage", 12.00m);
 
             // Rule 1 — ESB is always free
             if (request.Channel.ToUpper() == "ESB")
@@ -82,10 +81,11 @@ namespace BankStatementAPI.Services
 
         public async Task<ChargingResult> ProcessCharge(
             StatementRequestDTO request,
-            int numberOfPages)
+            int numberOfPages,
+            string staffUsername)
         {
             // Step 1 — Calculate what the charge will be
-            var preview = PreviewCharge(request, numberOfPages);
+            var preview = await PreviewCharge(request, numberOfPages);
 
             // Step 2 — If free or waived no further action needed
             if (preview.Status == ChargeStatus.Free ||
@@ -140,10 +140,17 @@ namespace BankStatementAPI.Services
             }
 
             // Step 6 — Balance is sufficient — attempt debit
+            // StatementAccountNumber is the statement being printed
+            string statementAccountNumber = request.AccountNumber;
+
+
+
             var debitResult = await _bankApiService.DebitAccount(
                 accountToCharge,
                 requiredCharge,
-                request.Channel
+                request.Channel,
+                statementAccountNumber,
+                staffUsername
             );
 
             // Step 7 — Debit failed
@@ -155,6 +162,8 @@ namespace BankStatementAPI.Services
                     AccountCharged = accountToCharge,
                     Status = ChargeStatus.Failed,
                     NumberOfPages = numberOfPages,
+                    BankTransactionReference = debitResult.TransactionReference,
+                    ChargeTransactionId = debitResult.ChargeTransactionId,
                     Message = debitResult.UserMessage
                         ?? $"Transaction failed on account {accountToCharge}",
                     ErrorDetails = debitResult.ErrorMessage
@@ -169,6 +178,7 @@ namespace BankStatementAPI.Services
                 Status = ChargeStatus.Success,
                 NumberOfPages = numberOfPages,
                 BankTransactionReference = debitResult.TransactionReference,
+                ChargeTransactionId = debitResult.ChargeTransactionId,
                 Message = $"GHS {requiredCharge:N2} successfully charged to " +
                           $"account {accountToCharge}. " +
                           $"Reference: {debitResult.TransactionReference}"

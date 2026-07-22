@@ -20,7 +20,14 @@ namespace BankStatementAPI.Middleware
         {
             string path = context.Request.Path.Value ?? "";
 
-            if (path.Contains("/api/auth/login"))
+            // Let CORS preflight pass through without authentication.
+            if (HttpMethods.IsOptions(context.Request.Method))
+            {
+                await _next(context);
+                return;
+            }
+
+            if (path.Contains("/api/auth/login", StringComparison.OrdinalIgnoreCase))
             {
                 await _next(context);
                 return;
@@ -43,10 +50,16 @@ namespace BankStatementAPI.Middleware
             }
                 
             string? authHeader = context.Request.Headers["Authorization"];
+            var requestPath = context.Request.Path.Value ?? "";
 
-            if (string.IsNullOrEmpty(authHeader) ||
-                !authHeader.StartsWith("Bearer "))
+            if (string.IsNullOrWhiteSpace(authHeader) ||
+                !authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
             {
+                Serilog.Log.Warning(
+                    "Auth rejected: missing/invalid Authorization header. Path={Path}. AuthorizationHeaderPresent={HasAuthHeader}",
+                    requestPath,
+                    !string.IsNullOrWhiteSpace(authHeader));
+
                 context.Response.StatusCode = 401;
                 await context.Response.WriteAsJsonAsync(new
                 {
@@ -55,13 +68,16 @@ namespace BankStatementAPI.Middleware
                 return;
             }
 
-            string token = authHeader.Substring("Bearer ".Length);
+            string token = authHeader.Substring("Bearer ".Length).Trim();
 
-            // ✅ Fixed — using correct method name and return type
             var principal = ValidateToken(token);
 
             if (principal == null)
             {
+                Serilog.Log.Warning(
+                    "Auth rejected: invalid/expired JWT. Path={Path}",
+                    requestPath);
+
                 context.Response.StatusCode = 401;
                 await context.Response.WriteAsJsonAsync(new
                 {
@@ -70,11 +86,20 @@ namespace BankStatementAPI.Middleware
                 return;
             }
 
-            // ✅ Fixed — attaching user info to the request
+            // Attach user info to the request
             context.User = principal;
 
+            // Extra debug logging for auth/authorization issues
+            string? username = context.User.FindFirstValue(ClaimTypes.Name);
+            string? isAdmin = context.User.FindFirstValue("isAdmin");
+            Serilog.Log.Information(
+                "Auth ok. User={Username}. isAdminClaim={IsAdminClaim}. Path={Path}",
+                string.IsNullOrWhiteSpace(username) ? "<missing>" : username,
+                isAdmin ?? "<missing>",
+                requestPath);
+
             await _next(context);
-        }
+        } 
 
         private ClaimsPrincipal? ValidateToken(string token)
         {

@@ -27,11 +27,16 @@ type StatementPreviewResponse = {
   chargeMessage: string;
   accountName: string;
   accountNumber: string;
+  bookBalance: number;
+  accountBalance?: number;
+  accountToChargeName?: string;
+  accountToChargeBalance?: number;
 };
 
 type AccountLookupResponse = {
   accountNumber: string;
   accountName: string;
+  accountBalance: number;
 };
 
 const getAuthHeader = () => {
